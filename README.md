@@ -1,59 +1,170 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# ☕ Embun Cafe — Database Documentation
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Repositori ini berisi struktur database backend untuk aplikasi **Embun Cafe**, yang dibangun menggunakan **Laravel** dengan database **SQLite**. Database ini mencakup fitur manajemen pesanan, reservasi meja, inventaris, menu, pelanggan, hingga laporan.
 
-## About Laravel
+---
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## 🛠️ Teknologi yang Digunakan
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+| Teknologi   | Versi        |
+|-------------|--------------|
+| PHP         | >= 8.2       |
+| Laravel     | >= 11.x      |
+| Database    | SQLite       |
+| ORM         | Eloquent     |
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+---
 
-## Learning Laravel
+## 🗄️ Struktur Database
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+Database terdiri dari **8 tabel utama** yang saling berelasi sebagai berikut:
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+### 1. `users`
+Tabel untuk menyimpan data pengguna sistem (admin/kasir).
 
-## Laravel Sponsors
+| Kolom       | Tipe      | Keterangan                    |
+|-------------|-----------|-------------------------------|
+| `id`        | bigint    | Primary Key                   |
+| `name`      | string    | Nama pengguna                 |
+| `email`     | string    | Email (unik)                  |
+| `password`  | string    | Password (ter-hash)           |
+| `timestamps`| timestamp | `created_at` & `updated_at`   |
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+---
 
-### Premium Partners
+### 2. `customers`
+Tabel untuk menyimpan data pelanggan yang melakukan reservasi.
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+| Kolom       | Tipe      | Keterangan                    |
+|-------------|-----------|-------------------------------|
+| `id`        | bigint    | Primary Key                   |
+| `name`      | string    | Nama pelanggan                |
+| `noHP`      | string    | Nomor HP (opsional)           |
+| `timestamps`| timestamp | `created_at` & `updated_at`   |
 
-## Contributing
+---
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+### 3. `menus`
+Tabel untuk menyimpan daftar menu makanan dan minuman yang tersedia.
 
-## Code of Conduct
+| Kolom         | Tipe      | Keterangan                    |
+|---------------|-----------|-------------------------------|
+| `id`          | bigint    | Primary Key                   |
+| `menuName`    | string    | Nama menu                     |
+| `price`       | float     | Harga menu                    |
+| `description` | text      | Deskripsi menu (opsional)     |
+| `timestamps`  | timestamp | `created_at` & `updated_at`   |
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+---
 
-## Security Vulnerabilities
+### 4. `inventaris`
+Tabel untuk menyimpan data stok bahan baku atau peralatan cafe.
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+| Kolom       | Tipe      | Keterangan                         |
+|-------------|-----------|------------------------------------|
+| `id`        | bigint    | Primary Key                        |
+| `itemName`  | string    | Nama item/bahan                    |
+| `stock`     | integer   | Jumlah stok (default: 0)           |
+| `satuan`    | string    | Satuan stok (contoh: kg, liter)    |
+| `timestamps`| timestamp | `created_at` & `updated_at`        |
 
-## License
+---
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+### 5. `orders`
+Tabel untuk mencatat transaksi pesanan yang dibuat oleh pengguna (kasir).
+
+| Kolom        | Tipe      | Keterangan                              |
+|--------------|-----------|-----------------------------------------|
+| `id`         | bigint    | Primary Key                             |
+| `user_id`    | bigint    | Foreign Key → `users.id` (cascade)      |
+| `date`       | date      | Tanggal transaksi                       |
+| `totalOrder` | float     | Total harga keseluruhan pesanan         |
+| `status`     | string    | Status pesanan (contoh: Pending, Done)  |
+| `timestamps` | timestamp | `created_at` & `updated_at`            |
+
+---
+
+### 6. `order_details`
+Tabel pivot yang menyimpan detail item dari setiap pesanan.
+
+| Kolom       | Tipe      | Keterangan                              |
+|-------------|-----------|-----------------------------------------|
+| `id`        | bigint    | Primary Key                             |
+| `order_id`  | bigint    | Foreign Key → `orders.id` (cascade)     |
+| `menu_id`   | bigint    | Foreign Key → `menus.id` (cascade)      |
+| `quantity`  | integer   | Jumlah item yang dipesan                |
+| `subtotal`  | float     | Subtotal harga (quantity × price)       |
+| `timestamps`| timestamp | `created_at` & `updated_at`            |
+
+---
+
+### 7. `reservations`
+Tabel untuk menyimpan data pemesanan/booking meja oleh pelanggan.
+
+| Kolom         | Tipe      | Keterangan                                    |
+|---------------|-----------|-----------------------------------------------|
+| `id`          | bigint    | Primary Key                                   |
+| `customer_id` | bigint    | Foreign Key → `customers.id` (cascade)        |
+| `date`        | date      | Tanggal booking                               |
+| `startTime`   | time      | Jam mulai reservasi                           |
+| `duration`    | integer   | Durasi reservasi (dalam jam)                  |
+| `jumlahOrang` | integer   | Jumlah orang yang akan datang                 |
+| `status`      | string    | Status reservasi (default: `Pending`)         |
+| `timestamps`  | timestamp | `created_at` & `updated_at`                   |
+
+> Status reservasi bisa diubah menjadi: `Pending`, `Confirmed`, atau `Cancelled`.
+
+---
+
+### 8. `reports`
+Tabel untuk menyimpan laporan periodik cafe (harian, mingguan, bulanan, dll).
+
+| Kolom         | Tipe      | Keterangan                            |
+|---------------|-----------|---------------------------------------|
+| `id`          | bigint    | Primary Key                           |
+| `reportType`  | string    | Jenis laporan (contoh: Sales, Stock)  |
+| `date`        | date      | Tanggal laporan                       |
+| `periode`     | string    | Periode laporan (contoh: Mei 2026)    |
+| `description` | text      | Keterangan tambahan (opsional)        |
+| `timestamps`  | timestamp | `created_at` & `updated_at`           |
+
+---
+
+## 🔗 Relasi Antar Tabel
+
+```
+users ──────────────────── orders (1 user bisa punya banyak orders)
+                               │
+                               └──── order_details ──── menus
+                                     (1 order bisa punya banyak item menu)
+
+customers ──────────────── reservations
+                           (1 customer bisa punya banyak reservasi)
+```
+
+---
+
+## 🚀 Cara Menjalankan Migration & Seeder
+
+Pastikan konfigurasi database sudah benar di file `.env`, lalu jalankan perintah berikut:
+
+```bash
+# Jalankan semua migration (buat tabel)
+php artisan migrate
+
+# Jalankan seeder (isi data contoh)
+php artisan db:seed
+
+# Atau keduanya sekaligus (reset + migrate + seed)
+php artisan migrate:fresh --seed
+```
+
+---
+
+## 👩‍💻 Kontributor
+
+- **Jasmine Apsari** — Database Design & Migration (Branch: `embun-database`)
+
+---
+
+> Project ini merupakan bagian dari sistem manajemen **Embun Slowbar & Library**.
