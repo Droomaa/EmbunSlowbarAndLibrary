@@ -1,2 +1,3 @@
-# EmbunSlowbarAndLibrary
-Aplikasi berbasis website dengan menyediakan halaman dashboard, landing page, dan form kasir didalamnya
+# Embun Cafe Database 
+
+Struktur database backend untuk website **Embun Cafe**
