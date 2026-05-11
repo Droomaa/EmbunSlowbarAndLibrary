@@ -3,6 +3,7 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\AccountManagementController;
 
 // --- PUBLIC ROUTES (Tidak perlu login) ---
 Route::post('/register', [AuthController::class, 'register']);
@@ -17,12 +18,17 @@ Route::middleware('auth:sanctum')->group(function () {
         return response()->json($request->user());
     });
 
-    // 1. Group Route khusus OWNER
+    // --- Rute khusus Owner ---
     Route::middleware('role:Owner')->group(function () {
-        // Nanti route laporan keuangan, hapus user, dll taruh di sini
+        // Route dashboard owner yang dikembalikan seperti semula
         Route::get('/owner/dashboard', function () {
-            return response()->json(['message' => 'Selamat datang, Owner!']);
+            return response()->json(['message' => 'Berhasil masuk! Ini data rahasia Owner.']);
         });
+        
+        // Endpoint Management Akun Pegawai
+        Route::get('/owner/accounts', [AccountManagementController::class, 'index']); // Lihat daftar
+        Route::post('/owner/accounts', [AccountManagementController::class, 'store']); // Tambah akun
+        Route::delete('/owner/accounts/{id}', [AccountManagementController::class, 'destroy']); // Hapus akun
     });
 
     // 2. Group Route untuk OWNER dan ADMIN
