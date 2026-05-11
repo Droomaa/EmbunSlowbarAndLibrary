@@ -26,20 +26,23 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     // 2. Group Route untuk OWNER dan ADMIN
-    Route::middleware('role:Owner,Admin')->group(function () {
-        // Nanti route kelola stok bahan, kelola menu, dll taruh di sini
+    Route::middleware('role:Admin')->group(function () {
         Route::get('/admin/stok', function () {
-            return response()->json(['message' => 'Ini data stok bahan']);
+            return response()->json(['message' => 'Halaman kelola stok khusus Admin.']);
         });
     });
 
-    // 3. Group Route untuk STAFF / KARYAWAN
+    // --- Rute khusus Staff ---
     Route::middleware('role:Staff')->group(function () {
-        // Nanti route kelola pesanan masuk taruh di sini
+        Route::get('/staff/pesanan', function () {
+            return response()->json(['message' => 'Halaman kelola pesanan khusus Staff.']);
+        });
     });
 
     // 4. Group Route khusus CUSTOMER
     Route::middleware('role:Customer')->group(function () {
-        // Nanti route bikin reservasi, lihat riwayat pesanan taruh di sini
+        Route::get('/customer/profil', function () {
+            return response()->json(['message' => 'Berhasil! Ini halaman profil Customer.']);
+        });
     });
 });
