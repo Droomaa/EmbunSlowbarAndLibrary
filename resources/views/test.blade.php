@@ -83,6 +83,21 @@
         <p id="verif-order-status" style="font-weight: bold;"></p>
     </div>
 
+    <div class="box">
+        <h3>7. Tambah Stok Bahan (Staff/Admin)</h3>
+        <input type="text" id="inv_name" placeholder="Nama Bahan (Misal: Biji Kopi Gayo)">
+        <input type="number" id="inv_qty" placeholder="Jumlah (Misal: 2.5)">
+        <select id="inv_unit" style="display:block; width:100%; margin-bottom:10px; padding:8px;">
+            <option value="Kg">Kilogram (Kg)</option>
+            <option value="Gram">Gram</option>
+            <option value="Liter">Liter</option>
+            <option value="Ml">Mililiter (Ml)</option>
+            <option value="Pcs">Pcs</option>
+        </select>
+        <button onclick="testTambahStok()">Simpan Stok Baru</button>
+        <p id="inv-status" style="font-weight: bold;"></p>
+    </div>
+
     <script>
         // Fungsi untuk mengambil data dan mengisi dropdown
         async function loadDropdownData() {
@@ -355,6 +370,50 @@
                 }
             } catch (error) {
                 statusLabel.innerText = "Error jaringan!";
+            }
+        }
+
+        // 7. Fungsi Tambah Stok (Admin/Staff)
+        async function testTambahStok() {
+            const token = localStorage.getItem('embun_token');
+            const statusLabel = document.getElementById('inv-status');
+            
+            if (!token) {
+                statusLabel.innerText = "Ditolak: Belum login!";
+                statusLabel.style.color = "red";
+                return;
+            }
+
+            statusLabel.innerText = "Menyimpan bahan...";
+            statusLabel.style.color = "orange";
+
+            const payload = {
+                item_name: document.getElementById('inv_name').value,
+                quantity: document.getElementById('inv_qty').value,
+                unit: document.getElementById('inv_unit').value
+            };
+
+            try {
+                const response = await fetch(`${API_URL}/inventory`, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(payload)
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    statusLabel.innerText = `Sukses: ${data.message}`;
+                    statusLabel.style.color = "green";
+                } else {
+                    statusLabel.innerText = `Gagal: Cek inputanmu!`;
+                    statusLabel.style.color = "red";
+                }
+            } catch (error) {
+                statusLabel.innerText = "Error jaringan!";
+                statusLabel.style.color = "red";
             }
         }
     </script>

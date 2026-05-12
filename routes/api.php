@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\InventoryController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
@@ -53,6 +54,12 @@ Route::middleware('auth:sanctum')->group(function () {
         // PATCH Update Status
         Route::patch('/reservations/{id}/status', [ReservationController::class, 'updateStatus']);
         Route::patch('/orders/{id}/status', [OrderController::class, 'updateStatus']);
+
+        // --- Rute Manajemen Stok Bahan (Inventory) ---
+        Route::get('/inventory', [InventoryController::class, 'index']);
+        Route::post('/inventory', [InventoryController::class, 'store']);
+        Route::patch('/inventory/{id}', [InventoryController::class, 'update']);
+        Route::delete('/inventory/{id}', [InventoryController::class, 'destroy']);
     });
 
     // 2. Group Route untuk ADMIN
