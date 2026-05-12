@@ -10,24 +10,18 @@ return new class extends Migration
      * Run the migrations.
      */
     public function up(): void
-    {
-        Schema::create('reservations', function (Blueprint $table) {
-            $table->id();
-            
-            // Relasi ke tabel customers, kalau customer dihapus reservasi ikut hilang
-            $table->foreignId('customer_id')->constrained('customers')->onDelete('cascade');
-            
-            $table->date('date');           // Tanggal booking
-            $table->time('startTime');      // Jam mulai
-            $table->integer('duration');    // Durasi (jam)
-            $table->integer('jumlahOrang'); // Kapasitas meja
-            
-            // Status awal biasanya 'Pending', bisa diubah jadi 'Confirmed' atau 'Cancelled'
-            $table->string('status')->default('Pending');
-            
-            $table->timestamps();
-        });
-    }
+{
+    Schema::create('reservations', function (Blueprint $table) {
+        $table->id('reservation_id');
+        $table->string('customer_name');
+        $table->string('phone_number');
+        $table->dateTime('reservation_date'); // Tanggal & jam booking
+        $table->integer('pax'); // Jumlah orang
+        $table->string('status')->default('Pending'); // Status default menunggu konfirmasi
+        $table->text('notes')->nullable(); // Catatan tambahan (opsional)
+        $table->timestamps();
+    });
+}
 
     /**
      * Reverse the migrations.

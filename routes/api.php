@@ -5,7 +5,10 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AccountManagementController;
 use App\Http\Controllers\MenuController;
+use App\Http\Controllers\ReservationController;
 
+// Rute PUBLIC (Pelanggan / Guest)
+Route::post('/reservations', [ReservationController::class, 'store']); // Tambahkan baris ini
 // --- PUBLIC ROUTES (Tidak perlu login) ---
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
@@ -21,14 +24,13 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     Route::middleware('role:Owner,Admin')->group(function () {
-        Route::post('/menus', [MenuController::class, 'store']); // <-- Pastikan baris ini ada
+        Route::post('/menus', [MenuController::class, 'store']);
         Route::post('/menus/{id}', [MenuController::class, 'update']);
         Route::delete('/menus/{id}', [MenuController::class, 'destroy']);
     });
 
     // --- Rute khusus Owner ---
     Route::middleware('role:Owner')->group(function () {
-        // Route dashboard owner yang dikembalikan seperti semula
         Route::get('/owner/dashboard', function () {
             return response()->json(['message' => 'Berhasil masuk! Ini data rahasia Owner.']);
         });
@@ -39,7 +41,13 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/owner/accounts/{id}', [AccountManagementController::class, 'destroy']); // Hapus akun
     });
 
-    // 2. Group Route untuk OWNER dan ADMIN
+    // --- Group Route khusus ADMIN & STAFF (Karyawan) ---
+    Route::middleware('role:Admin,Staff')->group(function () {
+        // Endpoint untuk memverifikasi/mengubah status reservasi
+        Route::patch('/reservations/{id}/status', [ReservationController::class, 'updateStatus']);
+    });
+
+    // 2. Group Route untuk ADMIN
     Route::middleware('role:Admin')->group(function () {
         Route::get('/admin/stok', function () {
             return response()->json(['message' => 'Halaman kelola stok khusus Admin.']);
@@ -50,13 +58,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::middleware('role:Staff')->group(function () {
         Route::get('/staff/pesanan', function () {
             return response()->json(['message' => 'Halaman kelola pesanan khusus Staff.']);
-        });
-    });
-
-    // 4. Group Route khusus CUSTOMER
-    Route::middleware('role:Customer')->group(function () {
-        Route::get('/customer/profil', function () {
-            return response()->json(['message' => 'Berhasil! Ini halaman profil Customer.']);
         });
     });
 });
