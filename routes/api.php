@@ -6,6 +6,9 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AccountManagementController;
 use App\Http\Controllers\MenuController;
 use App\Http\Controllers\ReservationController;
+use App\Http\Controllers\OrderController;
+
+Route::post('/orders', [OrderController::class, 'store']); // Pelanggan buat pesanan
 
 // Rute PUBLIC (Pelanggan / Guest)
 Route::post('/reservations', [ReservationController::class, 'store']); // Tambahkan baris ini
@@ -43,8 +46,13 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // --- Group Route khusus ADMIN & STAFF (Karyawan) ---
     Route::middleware('role:Admin,Staff')->group(function () {
-        // Endpoint untuk memverifikasi/mengubah status reservasi
+        // GET Data untuk dropdown
+        Route::get('/reservations', [ReservationController::class, 'index']);
+        Route::get('/orders', [OrderController::class, 'index']);
+
+        // PATCH Update Status
         Route::patch('/reservations/{id}/status', [ReservationController::class, 'updateStatus']);
+        Route::patch('/orders/{id}/status', [OrderController::class, 'updateStatus']);
     });
 
     // 2. Group Route untuk ADMIN

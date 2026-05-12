@@ -7,6 +7,10 @@ use Illuminate\Http\Request;
 
 class ReservationController extends Controller
 {
+    public function index()
+    {
+        return response()->json(Reservation::all());
+    }
     // Public: Membuat reservasi baru (Guest)
     public function store(Request $request)
     {

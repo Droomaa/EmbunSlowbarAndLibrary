@@ -11,7 +11,7 @@
     </style>
 </head>
 <body>
-
+<button onclick="loadDropdownData()" style="background-color: #28a745; color: white; margin-bottom: 20px;">Refresh Data Dropdown</button>
     <h1>UI Testing Embun Cafe</h1>
 
     <div class="box">
@@ -44,7 +44,9 @@
 
     <div class="box">
         <h3>4. Verifikasi Reservasi (Harus Login sbg Karyawan/Admin)</h3>
-        <input type="number" id="verif_id" placeholder="ID Reservasi (Misal: 1)">
+        <select id="verif_id" style="display:block; width:100%; margin-bottom:10px; padding:8px;">
+            <option value="">-- Pilih Reservasi --</option>
+        </select>
         <select id="verif_status" style="display:block; width:100%; margin-bottom:10px; padding:8px;">
             <option value="Approved">Approved (Terima)</option>
             <option value="Rejected">Rejected (Tolak)</option>
@@ -54,7 +56,89 @@
         <p id="verif-status" style="font-weight: bold;"></p>
     </div>
 
+    <div class="box">
+        <h3>5. Buat Pesanan (Guest)</h3>
+        <input type="text" id="order_name" placeholder="Nama Pemesan">
+        <input type="text" id="order_table" placeholder="Nomor Meja (Opsional)">
+        <p style="font-size: 14px; margin-bottom: 5px;">Pesan Menu (Satu item dulu untuk test):</p>
+        <select id="order_menu_id" style="display:block; width:100%; margin-bottom:10px; padding:8px;">
+            <option value="">-- Pilih Menu --</option>
+        </select>
+        <input type="number" id="order_qty" placeholder="Jumlah Porsi (Misal: 2)">
+        <button onclick="testBuatPesanan()">Order Sekarang</button>
+        <p id="order-status" style="font-weight: bold;"></p>
+    </div>
+
+    <div class="box">
+        <h3>6. Update Status Pesanan (Staff/Admin)</h3>
+        <select id="verif_order_id" style="display:block; width:100%; margin-bottom:10px; padding:8px;">
+            <option value="">-- Pilih Pesanan --</option>
+        </select>
+        <select id="verif_order_status" style="display:block; width:100%; margin-bottom:10px; padding:8px;">
+            <option value="Processing">Processing (Sedang Dibuat)</option>
+            <option value="Completed">Completed (Selesai)</option>
+            <option value="Canceled">Canceled (Batal)</option>
+        </select>
+        <button onclick="testUpdatePesanan()">Update Pesanan</button>
+        <p id="verif-order-status" style="font-weight: bold;"></p>
+    </div>
+
     <script>
+        // Fungsi untuk mengambil data dan mengisi dropdown
+        async function loadDropdownData() {
+            const token = localStorage.getItem('embun_token');
+            
+           // 1. Load Data Menu (Public)
+            try {
+                const resMenu = await fetch(`${API_URL}/menus`);
+                const responseData = await resMenu.json();
+                
+                // Deteksi otomatis: apakah datanya dibungkus "data" atau langsung array
+                const menus = responseData.data ? responseData.data : responseData;
+
+                const menuSelect = document.getElementById('order_menu_id');
+                menuSelect.innerHTML = '<option value="">-- Pilih Menu --</option>'; // Reset
+                
+                menus.forEach(m => {
+                    menuSelect.innerHTML += `<option value="${m.id}">${m.menuName} (Rp ${m.price})</option>`;
+                });
+            } catch (e) {
+                console.error("Error Detail Load Menu:", e);
+                alert("Gagal mengambil data menu. Cek inspect element (F12) -> tab Console!");
+            }
+
+            // 2. Load Data Reservasi & Order (Butuh Login)
+            if (token) {
+                try {
+                    // Load Reservasi
+                    const resResv = await fetch(`${API_URL}/reservations`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    const resvs = await resResv.json();
+                    const resvSelect = document.getElementById('verif_id');
+                    resvSelect.innerHTML = '<option value="">-- Pilih Reservasi --</option>';
+                    resvs.forEach(r => {
+                        resvSelect.innerHTML += `<option value="${r.reservation_id}">${r.customer_name} - ${r.reservation_date} (${r.status})</option>`;
+                    });
+
+                    // Load Order
+                    const resOrder = await fetch(`${API_URL}/orders`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    const orders = await resOrder.json();
+                    const orderSelect = document.getElementById('verif_order_id');
+                    orderSelect.innerHTML = '<option value="">-- Pilih Pesanan --</option>';
+                    orders.forEach(o => {
+                        orderSelect.innerHTML += `<option value="${o.order_id}">Order #${o.order_id} - ${o.customer_name} (${o.status})</option>`;
+                    });
+                } catch (e) { console.log("Gagal load reservasi/order"); }
+            } else {
+                alert("Login sebagai Admin/Staff dulu untuk meload data dropdown Reservasi & Order!");
+            }
+        }
+
+        // Otomatis jalankan fungsi saat halaman pertama kali dibuka
+        window.onload = loadDropdownData;
         // Set URL dasar API kamu
         const API_URL = 'http://127.0.0.1:8000/api';
 
@@ -162,7 +246,7 @@
                 status.style.color = "red";
             }
         }
-        
+
         // 4. Fungsi Verifikasi Reservasi
         async function testVerifikasi() {
             const token = localStorage.getItem('embun_token');
@@ -202,6 +286,75 @@
             } catch (error) {
                 statusLabel.innerText = "Error jaringan!";
                 statusLabel.style.color = "red";
+            }
+        }
+        // 5. Fungsi Buat Pesanan (Guest)
+        async function testBuatPesanan() {
+            const status = document.getElementById('order-status');
+            status.innerText = "Memproses pesanan...";
+            status.style.color = "orange";
+
+            // Bikin array items sesuai format controller
+            const payload = {
+                customer_name: document.getElementById('order_name').value,
+                table_number: document.getElementById('order_table').value,
+                items: [
+                    {
+                        menu_id: document.getElementById('order_menu_id').value,
+                        quantity: document.getElementById('order_qty').value
+                    }
+                ]
+            };
+
+            try {
+                const response = await fetch(`${API_URL}/orders`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    status.innerText = `Sukses: ${data.message} (Total: Rp ${data.total_price})`;
+                    status.style.color = "green";
+                } else {
+                    status.innerText = `Gagal: Cek inputanmu!`;
+                    status.style.color = "red";
+                }
+            } catch (error) {
+                status.innerText = "Error jaringan!";
+            }
+        }
+
+        // 6. Fungsi Update Pesanan (Staff)
+        async function testUpdatePesanan() {
+            const token = localStorage.getItem('embun_token');
+            const statusLabel = document.getElementById('verif-order-status');
+            const id = document.getElementById('verif_order_id').value;
+            const newStatus = document.getElementById('verif_order_status').value;
+            
+            if (!token) return statusLabel.innerText = "Ditolak: Belum login!";
+            statusLabel.innerText = "Memproses...";
+
+            try {
+                const response = await fetch(`${API_URL}/orders/${id}/status`, {
+                    method: 'PATCH',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ status: newStatus })
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    statusLabel.innerText = `Sukses: ${data.message}`;
+                    statusLabel.style.color = "green";
+                } else {
+                    statusLabel.innerText = `Gagal: ${data.message}`;
+                    statusLabel.style.color = "red";
+                }
+            } catch (error) {
+                statusLabel.innerText = "Error jaringan!";
             }
         }
     </script>
