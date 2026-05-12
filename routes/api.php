@@ -20,6 +20,12 @@ Route::middleware('auth:sanctum')->group(function () {
         return response()->json($request->user());
     });
 
+    Route::middleware('role:Owner,Admin')->group(function () {
+        Route::post('/menus', [MenuController::class, 'store']); // <-- Pastikan baris ini ada
+        Route::post('/menus/{id}', [MenuController::class, 'update']);
+        Route::delete('/menus/{id}', [MenuController::class, 'destroy']);
+    });
+
     // --- Rute khusus Owner ---
     Route::middleware('role:Owner')->group(function () {
         // Route dashboard owner yang dikembalikan seperti semula
