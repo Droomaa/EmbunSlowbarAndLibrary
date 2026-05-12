@@ -4,17 +4,16 @@ namespace App\Http\Controllers;
 
 use App\Models\Inventory;
 use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
 
 class InventoryController extends Controller
 {
-    // GET: Lihat semua stok
-    public function index()
+    public function index(): JsonResponse
     {
         return response()->json(Inventory::all(), 200);
     }
 
-    // POST: Tambah bahan baru
-    public function store(Request $request)
+    public function store(Request $request): JsonResponse
     {
         $request->validate([
             'item_name' => 'required|string|max:255',
@@ -30,15 +29,17 @@ class InventoryController extends Controller
         ], 201);
     }
 
-    // PATCH: Update jumlah stok (misal setelah dipakai / restock)
-    public function update(Request $request, $id)
+    public function update(Request $request, $id): JsonResponse
     {
         $request->validate([
             'quantity' => 'required|numeric|min:0',
         ]);
 
         $item = Inventory::find($id);
-        if (!$item) return response()->json(['message' => 'Bahan tidak ditemukan'], 404);
+
+        if (!$item) {
+            return response()->json(['message' => 'Bahan tidak ditemukan'], 404);
+        }
 
         $item->quantity = $request->quantity;
         $item->save();
@@ -46,13 +47,16 @@ class InventoryController extends Controller
         return response()->json(['message' => 'Stok bahan berhasil diupdate!'], 200);
     }
 
-    // DELETE: Hapus bahan
-    public function destroy($id)
+    public function destroy($id): JsonResponse
     {
         $item = Inventory::find($id);
-        if (!$item) return response()->json(['message' => 'Bahan tidak ditemukan'], 404);
+
+        if (!$item) {
+            return response()->json(['message' => 'Bahan tidak ditemukan'], 404);
+        }
 
         $item->delete();
+
         return response()->json(['message' => 'Bahan berhasil dihapus!'], 200);
     }
 }

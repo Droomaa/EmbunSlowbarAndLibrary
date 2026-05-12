@@ -4,15 +4,16 @@ namespace App\Http\Controllers;
 
 use App\Models\Reservation;
 use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
 
 class ReservationController extends Controller
 {
-    public function index()
+    public function index(): JsonResponse
     {
-        return response()->json(Reservation::all());
+        return response()->json(Reservation::all(), 200);
     }
-    // Public: Membuat reservasi baru (Guest)
-    public function store(Request $request)
+
+    public function store(Request $request): JsonResponse
     {
         $request->validate([
             'customer_name' => 'required|string|max:255',
@@ -26,7 +27,6 @@ class ReservationController extends Controller
             'phone_number' => $request->phone_number,
             'reservation_date' => $request->reservation_date,
             'pax' => $request->pax,
-            // Status otomatis 'Pending' dari database
         ]);
 
         return response()->json([
@@ -35,11 +35,10 @@ class ReservationController extends Controller
         ], 201);
     }
 
-    // Protected: Verifikasi / Update Status Reservasi (Khusus Admin & Staff)
-    public function updateStatus(Request $request, $id)
+    public function updateStatus(Request $request, $id): JsonResponse
     {
         $request->validate([
-            'status' => 'required|in:Approved,Rejected,Completed', // Status yang diperbolehkan
+            'status' => 'required|in:Approved,Rejected,Completed',
         ]);
 
         $reservation = Reservation::find($id);
@@ -48,8 +47,7 @@ class ReservationController extends Controller
             return response()->json(['message' => 'Reservasi tidak ditemukan'], 404);
         }
 
-        $reservation->status = $request->status;
-        $reservation->save();
+        $reservation->update(['status' => $request->status]);
 
         return response()->json([
             'message' => 'Status reservasi berhasil diupdate menjadi ' . $request->status,

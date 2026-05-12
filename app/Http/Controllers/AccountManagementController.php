@@ -4,14 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Hash;
 
 class AccountManagementController extends Controller
 {
-    // 1. Menampilkan daftar Admin dan Karyawan (Staff)
-    public function index()
+    public function index(): JsonResponse
     {
-        // Hanya mengambil user dengan role Admin atau Staff
         $users = User::whereIn('role', ['Admin', 'Staff'])->get();
         
         return response()->json([
@@ -20,19 +19,16 @@ class AccountManagementController extends Controller
         ], 200);
     }
 
-    // 2. Menambahkan akun Admin / Staff baru
-    public function store(Request $request)
+    public function store(Request $request): JsonResponse
     {
-        // Validasi input
         $request->validate([
             'name' => 'required|string|max:255',
             'username' => 'required|string|max:255|unique:users',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8',
-            'role' => 'required|in:Admin,Staff', // Membatasi agar Owner hanya bisa bikin Admin/Staff di sini
+            'role' => 'required|in:Admin,Staff',
         ]);
 
-        // Buat akun
         $user = User::create([
             'name' => $request->name,
             'username' => $request->username,
@@ -47,8 +43,7 @@ class AccountManagementController extends Controller
         ], 201);
     }
 
-    // 3. Menghapus akun
-    public function destroy($id)
+    public function destroy($id): JsonResponse
     {
         $user = User::find($id);
 

@@ -4,36 +4,36 @@ namespace App\Http\Controllers;
 
 use App\Models\Menu;
 use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Storage;
 
 class MenuController extends Controller
 {
-    // 1. Read: Tampilkan semua menu (Bisa diakses public/pelanggan)
-    public function index()
+    public function index(): JsonResponse
     {
-        $menus = Menu::all();
-        // Nambahin full URL untuk gambar biar frontend gampang nampilinnya
-        foreach ($menus as $menu) {
+        $menus = Menu::all()->map(function ($menu) {
             $menu->image_url = $menu->image ? asset('storage/' . $menu->image) : null;
-        }
-        return response()->json(['message' => 'Berhasil mengambil data menu', 'data' => $menus], 200);
+            return $menu;
+        });
+
+        return response()->json([
+            'message' => 'Berhasil mengambil data menu',
+            'data' => $menus
+        ], 200);
     }
 
-    // 2. Create: Tambah menu baru + Upload Foto (Khusus Owner/Admin)
-    public function store(Request $request)
+    public function store(Request $request): JsonResponse
     {
         $request->validate([
             'menuName' => 'required|string|max:255',
             'price' => 'required|numeric',
             'description' => 'nullable|string',
-            'image' => 'required|image|mimes:jpeg,png,jpg|max:2048', // Max 2MB
+            'image' => 'required|image|mimes:jpeg,png,jpg|max:2048',
         ]);
 
-        $imagePath = null;
-        if ($request->hasFile('image')) {
-            // Simpan gambar ke folder storage/app/public/menus
-            $imagePath = $request->file('image')->store('menus', 'public');
-        }
+        $imagePath = $request->hasFile('image')
+            ? $request->file('image')->store('menus', 'public')
+            : null;
 
         $menu = Menu::create([
             'menuName' => $request->menuName,
@@ -42,14 +42,19 @@ class MenuController extends Controller
             'image' => $imagePath,
         ]);
 
-        return response()->json(['message' => 'Menu berhasil ditambahkan!', 'data' => $menu], 201);
+        return response()->json([
+            'message' => 'Menu berhasil ditambahkan!',
+            'data' => $menu
+        ], 201);
     }
 
-    // 3. Update: Ubah data menu (Khusus Owner/Admin)
-    public function update(Request $request, $id)
+    public function update(Request $request, $id): JsonResponse
     {
         $menu = Menu::find($id);
-        if (!$menu) return response()->json(['message' => 'Menu tidak ditemukan'], 404);
+
+        if (!$menu) {
+            return response()->json(['message' => 'Menu tidak ditemukan'], 404);
+        }
 
         $request->validate([
             'menuName' => 'sometimes|string|max:255',
@@ -58,37 +63,37 @@ class MenuController extends Controller
             'image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
         ]);
 
-        // Cek kalau ada upload gambar baru
         if ($request->hasFile('image')) {
-            // Hapus gambar lama dari storage kalau ada
             if ($menu->image) {
                 Storage::disk('public')->delete($menu->image);
             }
-            // Simpan gambar baru
             $menu->image = $request->file('image')->store('menus', 'public');
         }
 
-        $menu->menuName = $request->menuName ?? $menu->menuName;
-        $menu->price = $request->price ?? $menu->price;
-        $menu->description = $request->description ?? $menu->description;
-        $menu->save();
+        $menu->update($request->only(['menuName', 'price', 'description']));
 
-        return response()->json(['message' => 'Menu berhasil diupdate!', 'data' => $menu], 200);
+        return response()->json([
+            'message' => 'Menu berhasil diupdate!',
+            'data' => $menu
+        ], 200);
     }
 
-    // 4. Delete: Hapus menu + Hapus foto (Khusus Owner/Admin)
-    public function destroy($id)
+    public function destroy($id): JsonResponse
     {
         $menu = Menu::find($id);
-        if (!$menu) return response()->json(['message' => 'Menu tidak ditemukan'], 404);
 
-        // Hapus file gambar dari server
+        if (!$menu) {
+            return response()->json(['message' => 'Menu tidak ditemukan'], 404);
+        }
+
         if ($menu->image) {
             Storage::disk('public')->delete($menu->image);
         }
 
         $menu->delete();
 
-        return response()->json(['message' => 'Menu berhasil dihapus!'], 200);
+        return response()->json([
+            'message' => 'Menu berhasil dihapus!'
+        ], 200);
     }
 }
