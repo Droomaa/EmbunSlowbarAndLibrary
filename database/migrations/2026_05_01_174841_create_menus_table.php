@@ -16,6 +16,7 @@ return new class extends Migration
             $table->string('menuName');
             $table->float('price');
             $table->text('description')->nullable();
+            $table->string('image')->nullable();
             $table->timestamps();
         });
     }
