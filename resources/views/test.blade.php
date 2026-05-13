@@ -20,6 +20,7 @@
         <input type="password" id="password" placeholder="Password">
         <button onclick="testLogin()">Login</button>
         <p id="login-status" style="color: blue;"></p>
+        <button onclick="testLogout()" style="background-color: #dc3545; color: white; margin-top: 10px; padding: 10px; cursor: pointer; border: none; border-radius: 4px;">Logout</button>
     </div>
 
     <div class="box">
@@ -99,6 +100,51 @@
     </div>
 
     <script>
+        // Fungsi untuk Logout
+        async function testLogout() {
+            const token = localStorage.getItem('embun_token');
+            const statusLabel = document.getElementById('login-status');
+            
+            if (!token) {
+                alert("Kamu belum login, tidak ada yang perlu di-logout!");
+                return;
+            }
+
+            statusLabel.innerText = "Proses logout...";
+            statusLabel.style.color = "orange";
+
+            try {
+                // Tembak API Logout
+                const response = await fetch(`${API_URL}/logout`, {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Authorization': `Bearer ${token}` // Wajib bawa token untuk dihapus di backend
+                    }
+                });
+
+                if (response.ok) {
+                    // Hapus token dari browser
+                    localStorage.removeItem('embun_token');
+                    
+                    statusLabel.innerText = "Sukses: Berhasil Logout! Silakan login kembali.";
+                    statusLabel.style.color = "blue";
+                    
+                    // Refresh data dropdown supaya data yang butuh login (reservasi/order) hilang dari form
+                    loadDropdownData();
+                    
+                    alert("Kamu telah berhasil logout.");
+                } else {
+                    statusLabel.innerText = "Gagal Logout. Token mungkin sudah kadaluarsa.";
+                    statusLabel.style.color = "red";
+                    localStorage.removeItem('embun_token'); // Tetap hapus di browser buat jaga-jaga
+                }
+            } catch (error) {
+                console.error("Error Logout:", error);
+                statusLabel.innerText = "Error jaringan saat logout!";
+                statusLabel.style.color = "red";
+            }
+        }
         // Fungsi untuk mengambil data dan mengisi dropdown
         async function loadDropdownData() {
             const token = localStorage.getItem('embun_token');
@@ -353,7 +399,7 @@
             try {
                 const response = await fetch(`${API_URL}/orders/${id}/status`, {
                     method: 'PATCH',
-                    headers: { 
+                    headers: {
                         'Content-Type': 'application/json',
                         'Accept': 'application/json',
                         'Authorization': `Bearer ${token}`
@@ -396,7 +442,7 @@
             try {
                 const response = await fetch(`${API_URL}/inventory`, {
                     method: 'POST',
-                    headers: { 
+                    headers: {
                         'Content-Type': 'application/json',
                         'Accept': 'application/json',
                         'Authorization': `Bearer ${token}`
