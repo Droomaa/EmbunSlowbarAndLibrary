@@ -205,6 +205,20 @@
 
         // 1. Fungsi Test Login
         async function testLogin() {
+            // --- TAMBAHKAN PENGECEKAN INI ---
+            const existingToken = localStorage.getItem('embun_token');
+            if (existingToken) {
+                alert("⛔ Ditolak: Kamu masih dalam keadaan Login! Silakan Logout terlebih dahulu sebelum login dengan akun lain.");
+                return; // Menghentikan proses login agar tidak lanjut ke bawah
+            }
+            // --------------------------------
+
+            const u = document.getElementById('log_user').value;
+            const p = document.getElementById('log_pass').value;
+            const statusLabel = document.getElementById('login-status');
+
+            statusLabel.innerText = "Mencoba login...";
+            statusLabel.style.color = "orange";
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
             const status = document.getElementById('login-status');
