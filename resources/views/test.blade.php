@@ -15,13 +15,13 @@
     <h1>UI Testing Embun Cafe</h1>
 
     <div class="box">
-        <h3>1. Login Internal (Owner/Admin)</h3>
-        <input type="text" id="username" placeholder="Username">
-        <input type="password" id="password" placeholder="Password">
-        <button onclick="testLogin()">Login</button>
-        <p id="login-status" style="color: blue;"></p>
-        <button onclick="testLogout()" style="background-color: #dc3545; color: white; margin-top: 10px; padding: 10px; cursor: pointer; border: none; border-radius: 4px;">Logout</button>
-    </div>
+    <h3>1. Login Internal (Owner/Admin/Staff)</h3>
+    <input type="text" id="log_user" placeholder="Username">
+    <input type="password" id="log_pass" placeholder="Password">
+    <button type="button" onclick="testLogin()">Login</button>
+    <p id="login-status" style="font-weight: bold;"></p>
+    <button type="button" onclick="testLogout()" style="background-color: #dc3545; color: white; margin-top: 10px; padding: 10px; border: none; border-radius: 4px; cursor: pointer;">Logout</button>
+</div>
 
     <div class="box">
         <h3>2. Tambah Menu (Harus Login)</h3>
@@ -209,14 +209,19 @@
             const existingToken = localStorage.getItem('embun_token');
             if (existingToken) {
                 alert("⛔ Ditolak: Kamu masih dalam keadaan Login! Silakan Logout terlebih dahulu sebelum login dengan akun lain.");
-                return; // Berhenti di sini
+                return;
             }
 
-            // Sesuaikan ID dengan yang ada di tag <input> HTML kamu
-            // Kalau di HTML pakai id="log_user", berarti di sini juga 'log_user'
-            const usernameInput = document.getElementById('log_user').value;
-            const passwordInput = document.getElementById('log_pass').value;
+            // Ambil ID yang persis sama dengan HTML di atas
+            const usernameInput = document.getElementById('log_user');
+            const passwordInput = document.getElementById('log_pass');
             const statusLabel = document.getElementById('login-status');
+
+            // Cek pencegahan error null
+            if (!usernameInput || !passwordInput) {
+                console.error("Elemen input tidak ditemukan! Cek ID HTML-nya.");
+                return;
+            }
 
             statusLabel.innerText = "Mencoba login...";
             statusLabel.style.color = "orange";
@@ -225,22 +230,18 @@
                 const response = await fetch(`${API_URL}/login`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-                    // Kirim payload sesuai format API (username & password)
                     body: JSON.stringify({
-                        username: usernameInput,
-                        password: passwordInput
+                        username: usernameInput.value,
+                        password: passwordInput.value
                     })
                 });
 
                 const data = await response.json();
 
                 if (response.ok) {
-                    // Simpan token ke memori browser
                     localStorage.setItem('embun_token', data.access_token);
                     statusLabel.innerText = `Sukses! Login sebagai: ${data.user.role}`;
                     statusLabel.style.color = "blue";
-                    
-                    // Refresh otomatis dropdown yang butuh token (Reservasi & Order)
                     loadDropdownData();
                 } else {
                     statusLabel.innerText = `Gagal: ${data.message}`;
