@@ -205,31 +205,31 @@
 
         // 1. Fungsi Test Login
         async function testLogin() {
-            // --- TAMBAHKAN PENGECEKAN INI ---
+            // Pengecekan Token Zombie
             const existingToken = localStorage.getItem('embun_token');
             if (existingToken) {
                 alert("⛔ Ditolak: Kamu masih dalam keadaan Login! Silakan Logout terlebih dahulu sebelum login dengan akun lain.");
-                return; // Menghentikan proses login agar tidak lanjut ke bawah
+                return; // Berhenti di sini
             }
-            // --------------------------------
 
-            const u = document.getElementById('log_user').value;
-            const p = document.getElementById('log_pass').value;
+            // Sesuaikan ID dengan yang ada di tag <input> HTML kamu
+            // Kalau di HTML pakai id="log_user", berarti di sini juga 'log_user'
+            const usernameInput = document.getElementById('log_user').value;
+            const passwordInput = document.getElementById('log_pass').value;
             const statusLabel = document.getElementById('login-status');
 
             statusLabel.innerText = "Mencoba login...";
             statusLabel.style.color = "orange";
-            const username = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
-            const status = document.getElementById('login-status');
-
-            status.innerText = "Loading...";
 
             try {
                 const response = await fetch(`${API_URL}/login`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-                    body: JSON.stringify({ username, password })
+                    // Kirim payload sesuai format API (username & password)
+                    body: JSON.stringify({
+                        username: usernameInput,
+                        password: passwordInput
+                    })
                 });
 
                 const data = await response.json();
@@ -237,12 +237,19 @@
                 if (response.ok) {
                     // Simpan token ke memori browser
                     localStorage.setItem('embun_token', data.access_token);
-                    status.innerText = `Sukses! Login sebagai: ${data.user.role}`;
+                    statusLabel.innerText = `Sukses! Login sebagai: ${data.user.role}`;
+                    statusLabel.style.color = "blue";
+                    
+                    // Refresh otomatis dropdown yang butuh token (Reservasi & Order)
+                    loadDropdownData();
                 } else {
-                    status.innerText = `Gagal: ${data.message}`;
+                    statusLabel.innerText = `Gagal: ${data.message}`;
+                    statusLabel.style.color = "red";
                 }
             } catch (error) {
-                status.innerText = "Error jaringan!";
+                console.error("Login Error:", error);
+                statusLabel.innerText = "Error jaringan!";
+                statusLabel.style.color = "red";
             }
         }
 
