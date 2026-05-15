@@ -3,12 +3,20 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\AdminDashboardController;
+use App\Http\Controllers\AdminStokController;
+use App\Http\Controllers\AdminPenjualanController;
+use App\Http\Controllers\AdminTransactionController;
 use App\Http\Controllers\AccountManagementController;
 use App\Http\Controllers\MenuController;
 use App\Http\Controllers\ReservationController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\InventoryController;
 
+Route::get('/admin/stock-report', [AdminStokController::class, 'index']);
+Route::get('/admin/sales-report', [AdminPenjualanController::class, 'index']);
+Route::get('/admin/transactions', [AdminTransactionController::class, 'index']);
+Route::get('/admin/dashboard-stats', [AdminDashboardController::class, 'index']);
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 Route::get('/menus', [MenuController::class, 'index']);

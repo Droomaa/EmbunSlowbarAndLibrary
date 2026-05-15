@@ -18,3 +18,10 @@ Route::prefix('owner')->group(function () {
     Route::get('/reports', function () { return view('owner.reports'); });
     Route::get('/stock', function () { return view('owner.stock'); });
 });
+
+Route::prefix('admin')->group(function () {
+    Route::get('/dashboard', function () { return view('admin.dashboard'); });
+    Route::get('/penjualan', function () { return view('admin.penjualan'); });
+    Route::get('/stok', function () { return view('admin.stok'); });
+    Route::get('/transaksi', function () { return view('admin.transaksi'); });
+});
