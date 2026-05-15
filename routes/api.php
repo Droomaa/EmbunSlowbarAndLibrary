@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\KaryawanOnlineController;
+use App\Http\Controllers\KaryawanReservasiController;
 use App\Http\Controllers\AdminDashboardController;
 use App\Http\Controllers\AdminStokController;
 use App\Http\Controllers\AdminPenjualanController;
@@ -14,6 +15,7 @@ use App\Http\Controllers\ReservationController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\InventoryController;
 
+Route::get('/karyawan/reservations', [KaryawanReservasiController::class, 'index']);
 Route::get('/karyawan/online-orders', [KaryawanOnlineController::class, 'index']);
 Route::get('/admin/stock-report', [AdminStokController::class, 'index']);
 Route::get('/admin/sales-report', [AdminPenjualanController::class, 'index']);

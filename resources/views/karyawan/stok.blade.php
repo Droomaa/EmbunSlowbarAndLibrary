@@ -9,21 +9,21 @@
         <div class="card" style="background: #f4f7f5; display: flex; justify-content: space-between; align-items: center;">
             <div>
                 <p style="color: #888; font-size: 11px; margin: 0; text-transform: uppercase;">Total Bahan</p>
-                <h2 style="margin: 5px 0 0 0; font-size: 32px;">124</h2>
+                <h2 id="val-stok-total" style="margin: 5px 0 0 0; font-size: 32px;">0</h2>
             </div>
-            <span style="color: #1e8e3e; font-size: 12px; font-weight: bold;">+4 minggu ini</span>
+            <span style="color: #1e8e3e; font-size: 12px; font-weight: bold;">Update Real-time</span>
         </div>
         <div class="card" style="background: #fce8e6; border: 1px solid #fad2cf; display: flex; justify-content: space-between; align-items: center;">
             <div>
                 <p style="color: #dc3545; font-size: 11px; margin: 0; text-transform: uppercase;">Stok Habis</p>
-                <h2 style="margin: 5px 0 0 0; color: #dc3545; font-size: 32px;">3</h2>
+                <h2 id="val-stok-habis" style="margin: 5px 0 0 0; color: #dc3545; font-size: 32px;">0</h2>
             </div>
             <span style="font-size: 24px; color: #dc3545;">⚠️</span>
         </div>
         <div class="card" style="background: #fffdf5; border: 1px solid #fdf5d3; display: flex; justify-content: space-between; align-items: center;">
             <div>
                 <p style="color: #856404; font-size: 11px; margin: 0; text-transform: uppercase;">Stok Menipis</p>
-                <h2 style="margin: 5px 0 0 0; color: #856404; font-size: 32px;">12</h2>
+                <h2 id="val-stok-menipis" style="margin: 5px 0 0 0; color: #856404; font-size: 32px;">0</h2>
             </div>
             <span style="font-size: 24px; color: #856404;">❗</span>
         </div>
@@ -57,22 +57,8 @@
                     <th style="padding: 15px 10px; border-bottom: 1px solid #eee; text-align: left; font-size: 11px; color: #888;">ACTIONS</th>
                 </tr>
             </thead>
-            <tbody>
-                <tr>
-                    <td style="padding: 15px 10px; border-bottom: 1px solid #eee;"><strong>Arabica Gayo Beans</strong></td>
-                    <td style="padding: 15px 10px; border-bottom: 1px solid #eee;"><strong>12.5</strong></td>
-                    <td style="padding: 15px 10px; border-bottom: 1px solid #eee; color: #888;">kg</td>
-                    <td style="padding: 15px 10px; border-bottom: 1px solid #eee;"><span class="badge badge-success">Safe</span></td>
-                    <td style="padding: 15px 10px; border-bottom: 1px solid #eee; color: #aaa; cursor: pointer;">✏️ 🗑️</td>
-                </tr>
-                <tr>
-                    <td style="padding: 15px 10px; border-bottom: 1px solid #eee;"><strong>Vanilla Syrup</strong></td>
-                    <td style="padding: 15px 10px; border-bottom: 1px solid #eee; color: #dc3545;"><strong>0.0</strong></td>
-                    <td style="padding: 15px 10px; border-bottom: 1px solid #eee; color: #888;">Bottle</td>
-                    <td style="padding: 15px 10px; border-bottom: 1px solid #eee;"><span class="badge" style="background: #dc3545; color: white;">Out of Stock</span></td>
-                    <td style="padding: 15px 10px; border-bottom: 1px solid #eee; color: #aaa; cursor: pointer;">✏️ 🗑️</td>
-                </tr>
-            </tbody>
+            <tbody id="stok-tbody">
+                </tbody>
         </table>
     </div>
 
@@ -83,4 +69,72 @@
             <p style="margin: 5px 0 0 0; font-size: 13px; color: #555;">Stok yang berstatus "Low" akan otomatis muncul dalam daftar usulan pesanan pengadaan besok pagi. Pastikan kuantitas tercatat akurat.</p>
         </div>
     </div>
+@endsection
+
+@section('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', async () => {
+        const token = localStorage.getItem('embun_token');
+        const tbody = document.getElementById('stok-tbody');
+
+        try {
+            // Kita REUSE API dari halaman Admin kemarin! Cerdas dan cepat.
+            const response = await fetch(`${API_URL}/admin/stock-report`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Accept': 'application/json'
+                }
+            });
+
+            const result = await response.json();
+            
+            if (response.ok) {
+                const data = result.data;
+
+                // 1. Update Kartu Metrik Atas
+                document.getElementById('val-stok-total').innerText = data.total || 0;
+                document.getElementById('val-stok-habis').innerText = data.habis || 0;
+                document.getElementById('val-stok-menipis').innerText = data.hampir_habis || 0;
+
+                // 2. Render Tabel Bahan Baku
+                if (data.items && data.items.length > 0) {
+                    tbody.innerHTML = '';
+                    
+                    data.items.forEach(item => {
+                        // Logika Penentuan Warna dan Label Status
+                        let statusBadge = '';
+                        let textQtyStyle = '';
+                        
+                        // Ingat, nama kolom di databasemu adalah 'quantity'
+                        if (item.quantity <= 0) {
+                            statusBadge = '<span style="background: #dc3545; color: white; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold;">Out of Stock</span>';
+                            textQtyStyle = 'color: #dc3545;';
+                        } else if (item.quantity <= 10) {
+                            statusBadge = '<span style="background: #fdf5d3; color: #856404; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold;">Low</span>';
+                            textQtyStyle = 'color: #856404;';
+                        } else {
+                            statusBadge = '<span style="background: #e6f4ea; color: #1e8e3e; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold;">Safe</span>';
+                            textQtyStyle = 'color: #333;';
+                        }
+
+                        // Susun HTML Baris Tabel
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td style="padding: 15px 10px; border-bottom: 1px solid #eee;"><strong>${item.item_name}</strong></td>
+                            <td style="padding: 15px 10px; border-bottom: 1px solid #eee; ${textQtyStyle}"><strong>${item.quantity}</strong></td>
+                            <td style="padding: 15px 10px; border-bottom: 1px solid #eee; color: #888;">${item.unit}</td>
+                            <td style="padding: 15px 10px; border-bottom: 1px solid #eee;">${statusBadge}</td>
+                            <td style="padding: 15px 10px; border-bottom: 1px solid #eee; color: #aaa; cursor: pointer; font-size: 14px;">✏️ 🗑️</td>
+                        `;
+                        tbody.appendChild(row);
+                    });
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 20px; color: #888;">Data stok bahan belum tersedia.</td></tr>';
+                }
+            }
+        } catch (error) {
+            console.error("Gagal memuat laporan stok bahan:", error);
+        }
+    });
+</script>
 @endsection
