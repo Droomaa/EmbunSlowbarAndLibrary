@@ -9,12 +9,12 @@ use Illuminate\Support\Facades\Hash;
 
 class AccountManagementController extends Controller
 {
-    public function index(): JsonResponse
+    public function index()
     {
-        $users = User::whereIn('role', ['Admin', 'Staff'])->get();
+        $users = \App\Models\User::all();
         
         return response()->json([
-            'message' => 'Berhasil mengambil data pegawai',
+            'message' => 'Berhasil mengambil data seluruh akun',
             'data' => $users
         ], 200);
     }

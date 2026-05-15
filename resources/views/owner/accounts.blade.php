@@ -11,7 +11,7 @@
     <div class="grid-4">
         <div class="card">
             <p style="color: #888; font-size: 12px; margin: 0; text-transform: uppercase;">Total Users</p>
-            <h2 style="margin: 10px 0 0 0;" id="val-users">12</h2>
+            <h2 style="margin: 10px 0 0 0;" id="val-users">0</h2>
         </div>
         <div class="card">
             <p style="color: #888; font-size: 12px; margin: 0; text-transform: uppercase;">Active Now</p>
@@ -19,7 +19,7 @@
         </div>
         <div class="card">
             <p style="color: #888; font-size: 12px; margin: 0; text-transform: uppercase;">Admin Roles</p>
-            <h2 style="margin: 10px 0 0 0;">3</h2>
+            <h2 style="margin: 10px 0 0 0;" id="val-admin">0</h2>
         </div>
         <div class="card">
             <p style="color: #888; font-size: 12px; margin: 0; text-transform: uppercase;">System Health</p>
@@ -38,16 +38,8 @@
                     <th>Actions</th>
                 </tr>
             </thead>
-            <tbody>
-                <tr>
-                    <td><strong>Ahmad Rizky</strong></td>
-                    <td style="color: #888;">@rizky_owner</td>
-                    <td><span style="background: #eee; padding: 3px 8px; border-radius: 10px; font-size: 12px;">Owner</span></td>
-                    <td><span class="text-green">• Active</span></td>
-                    <td>
-                        <button onclick="showDeleteModal('Budi Pratama')" style="border: none; background: transparent; cursor: pointer; color: #888;">🗑️</button>
-                    </td>
-                </tr>
+            <tbody id="accounts-tbody">
+                <tr><td colspan="5" style="text-align: center; color: #888;">Memuat data...</td></tr>
             </tbody>
         </table>
     </div>
@@ -70,14 +62,79 @@
 
 @section('scripts')
 <script>
-    // JS Logic untuk Modal
-    function showDeleteModal(name) {
+    // JS Logic untuk Modal Hapus
+    function showDeleteModal(name, id) {
         document.getElementById('delete-target-name').innerText = name;
         document.getElementById('delete-modal').style.display = 'flex';
+        
+        // Nanti kamu bisa tambahkan fungsi fetch DELETE ke API di sini pakai id
+        console.log("Akan menghapus user ID:", id);
     }
 
     function hideDeleteModal() {
         document.getElementById('delete-modal').style.display = 'none';
     }
+
+    // Fungsi Utama: Mengambil Data dari Backend
+    document.addEventListener('DOMContentLoaded', async () => {
+        // Ambil token dari memori browser yang didapat saat login di test-ui
+        const token = localStorage.getItem('embun_token');
+        const tbody = document.getElementById('accounts-tbody');
+
+        if (!token) {
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: red;">Akses ditolak! Silakan login sebagai Owner terlebih dahulu.</td></tr>';
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_URL}/owner/accounts`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Accept': 'application/json'
+                }
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: red;">Gagal mengambil data: ${data.message || 'Unauthorized'}</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = '';
+            
+            const users = data.data ? data.data : data;
+            let adminCount = 0;
+
+            users.forEach(user => {
+                if (user.role === 'Admin') adminCount++;
+
+                let roleColorBg = '#eee';
+                let roleColorText = '#333';
+                if (user.role === 'Admin') { roleColorBg = '#d4edda'; roleColorText = '#155724'; }
+                if (user.role === 'Staff' || user.role === 'Karyawan') { roleColorBg = '#fff3cd'; roleColorText = '#856404'; }
+
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><strong>${user.name}</strong></td>
+                    <td style="color: #888;">@${user.username}</td>
+                    <td><span style="background: ${roleColorBg}; color: ${roleColorText}; padding: 3px 8px; border-radius: 10px; font-size: 12px; font-weight: bold;">${user.role}</span></td>
+                    <td><span class="text-green">• Active</span></td>
+                    <td>
+                        <button onclick="showDeleteModal('${user.name}', ${user.id})" style="border: none; background: transparent; cursor: pointer; color: #888; font-size: 16px;">🗑️</button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+
+            document.getElementById('val-users').innerText = users.length;
+            document.getElementById('val-admin').innerText = adminCount;
+
+        } catch (error) {
+            console.error("Terjadi kesalahan:", error);
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: red;">Error jaringan! Pastikan server API menyala.</td></tr>';
+        }
+    });
 </script>
 @endsection
