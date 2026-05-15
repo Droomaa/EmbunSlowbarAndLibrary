@@ -20,4 +20,10 @@ public function addOns(): HasMany
     // Relasi ke tabel pivot yang mencatat add-on per item
     return $this->hasMany(OrderItemAddon::class, 'order_item_id', 'item_id');
 }
+
+// Relasi: Satu item pesanan itu milik satu Menu tertentu
+    public function menu()
+    {
+        return $this->belongsTo(Menu::class, 'menu_id');
+    }
 }

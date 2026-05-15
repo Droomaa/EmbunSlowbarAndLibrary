@@ -25,3 +25,12 @@ Route::prefix('admin')->group(function () {
     Route::get('/stok', function () { return view('admin.stok'); });
     Route::get('/transaksi', function () { return view('admin.transaksi'); });
 });
+
+Route::prefix('karyawan')->group(function () {
+    Route::get('/dashboard', function () { return view('karyawan.dashboard'); });
+    Route::get('/stok', function () { return view('karyawan.stok'); });
+    Route::get('/reservasi', function () { return view('karyawan.reservasi'); });
+    Route::get('/online', function () { return view('karyawan.online'); });
+    
+    Route::get('/kasir', function () { return view('karyawan.kasir'); });
+});
