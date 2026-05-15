@@ -4,6 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\OrderItemAddon;
+use App\Models\MenuVariant;
+use App\Models\AddOn;
 use App\Models\Menu;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;

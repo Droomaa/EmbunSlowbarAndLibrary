@@ -12,6 +12,7 @@ use App\Http\Controllers\InventoryController;
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 Route::get('/menus', [MenuController::class, 'index']);
+Route::get('/addons', fn() => response()->json(\App\Models\AddOn::all()));
 Route::post('/orders', [OrderController::class, 'store']);
 Route::post('/reservations', [ReservationController::class, 'store']);
 

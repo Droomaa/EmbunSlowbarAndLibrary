@@ -58,17 +58,22 @@
     </div>
 
     <div class="box">
-        <h3>5. Buat Pesanan (Guest)</h3>
-        <input type="text" id="order_name" placeholder="Nama Pemesan">
-        <input type="text" id="order_table" placeholder="Nomor Meja (Opsional)">
-        <p style="font-size: 14px; margin-bottom: 5px;">Pesan Menu (Satu item dulu untuk test):</p>
-        <select id="order_menu_id" style="display:block; width:100%; margin-bottom:10px; padding:8px;">
-            <option value="">-- Pilih Menu --</option>
-        </select>
-        <input type="number" id="order_qty" placeholder="Jumlah Porsi (Misal: 2)">
-        <button onclick="testBuatPesanan()">Order Sekarang</button>
-        <p id="order-status" style="font-weight: bold;"></p>
-    </div>
+    <h3>Buat Pesanan (Dinamis dengan Varian & Add-ons)</h3>
+    <input type="text" id="order_customer" placeholder="Nama Pelanggan (Contoh: Sandro)">
+    <input type="text" id="order_table" placeholder="Nomor Meja (Contoh: Meja 4)">
+    
+    <hr style="margin: 15px 0;">
+    <h4>Daftar Menu yang Dipesan:</h4>
+    
+    <div id="items-wrapper"></div>
+
+    <button type="button" onclick="tambahBarisPesanan()" style="background-color: #28a745; color: white; width: 100%; margin-bottom: 15px; border: none; padding: 8px; cursor: pointer; border-radius: 4px;">+ Tambah Menu Lain</button>
+
+    <button type="button" onclick="tambahBarisPesanan()" style="background-color: #28a745; color: white; width: 100%; margin-bottom: 15px; border: none; padding: 8px; cursor: pointer; border-radius: 4px;">+ Tambah Menu Lain</button>
+
+    <button type="button" onclick="testSubmitOrder()" style="width: 100%; font-weight: bold; padding: 10px;">Kirim Pesanan</button>
+    <p id="order-status" style="font-weight: bold; margin-top: 10px;"></p>
+</div>
 
     <div class="box">
         <h3>6. Update Status Pesanan (Staff/Admin)</h3>
@@ -100,6 +105,24 @@
     </div>
 
     <script>
+        // Fungsi ini dipanggil otomatis saat halaman dimuat
+        window.onload = async function() {
+            try {
+                // Ambil data Menu + Varian
+                const resMenu = await fetch(`${API_URL}/menus`);
+                const menuData = await resMenu.json();
+                globalMenus = menuData.data ? menuData.data : menuData;
+
+                // Ambil data Add-ons
+                const resAddon = await fetch(`${API_URL}/addons`);
+                globalAddons = await resAddon.json();
+
+                // Munculkan baris pertama form pesanan
+                tambahBarisPesanan();
+            } catch (error) {
+                console.error("Gagal mengambil master data Menu/Addon:", error);
+            }
+        };
         // Fungsi untuk Logout
         async function testLogout() {
             const token = localStorage.getItem('embun_token');
@@ -145,30 +168,32 @@
                 statusLabel.style.color = "red";
             }
         }
-        // Fungsi untuk mengambil data dan mengisi dropdown
+        let globalMenus = [];
+        let globalAddons = [];
+
         async function loadDropdownData() {
             const token = localStorage.getItem('embun_token');
             
-           // 1. Load Data Menu (Public)
+            // 1. Load Master Data (Menu & Add-ons) untuk Form Pesanan
             try {
                 const resMenu = await fetch(`${API_URL}/menus`);
                 const responseData = await resMenu.json();
-                
-                // Deteksi otomatis: apakah datanya dibungkus "data" atau langsung array
-                const menus = responseData.data ? responseData.data : responseData;
+                globalMenus = responseData.data ? responseData.data : responseData;
 
-                const menuSelect = document.getElementById('order_menu_id');
-                menuSelect.innerHTML = '<option value="">-- Pilih Menu --</option>'; // Reset
-                
-                menus.forEach(m => {
-                    menuSelect.innerHTML += `<option value="${m.id}">${m.menuName} (Rp ${m.price})</option>`;
-                });
+                const resAddon = await fetch(`${API_URL}/addons`);
+                globalAddons = await resAddon.json();
+
+                // Render ulang baris pesanan agar menunya langsung terisi
+                const wrapper = document.getElementById('items-wrapper');
+                if (wrapper) {
+                    wrapper.innerHTML = ''; // Bersihkan baris yang kosong
+                    tambahBarisPesanan();   // Bikin baris baru yang sudah ada isinya
+                }
             } catch (e) {
-                console.error("Error Detail Load Menu:", e);
-                alert("Gagal mengambil data menu. Cek inspect element (F12) -> tab Console!");
+                console.error("Error Fetch Master Data:", e);
             }
 
-            // 2. Load Data Reservasi & Order (Butuh Login)
+            // 2. Load Data Reservasi & Order (Butuh Login Admin/Staff)
             if (token) {
                 try {
                     // Load Reservasi
@@ -176,27 +201,38 @@
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
                     const resvs = await resResv.json();
+                    
                     const resvSelect = document.getElementById('verif_id');
-                    resvSelect.innerHTML = '<option value="">-- Pilih Reservasi --</option>';
-                    resvs.forEach(r => {
-                        resvSelect.innerHTML += `<option value="${r.reservation_id}">${r.customer_name} - ${r.reservation_date} (${r.status})</option>`;
-                    });
+                    if (resvSelect) {
+                        resvSelect.innerHTML = '<option value="">-- Pilih Reservasi --</option>';
+                        resvs.forEach(r => {
+                            resvSelect.innerHTML += `<option value="${r.reservation_id}">${r.customer_name} - ${r.reservation_date} (${r.status})</option>`;
+                        });
+                    }
 
                     // Load Order
                     const resOrder = await fetch(`${API_URL}/orders`, {
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
                     const orders = await resOrder.json();
+                    
                     const orderSelect = document.getElementById('verif_order_id');
-                    orderSelect.innerHTML = '<option value="">-- Pilih Pesanan --</option>';
-                    orders.forEach(o => {
-                        orderSelect.innerHTML += `<option value="${o.order_id}">Order #${o.order_id} - ${o.customer_name} (${o.status})</option>`;
-                    });
-                } catch (e) { console.log("Gagal load reservasi/order"); }
-            } else {
-                alert("Login sebagai Admin/Staff dulu untuk meload data dropdown Reservasi & Order!");
+                    if (orderSelect) {
+                        orderSelect.innerHTML = '<option value="">-- Pilih Pesanan --</option>';
+                        orders.forEach(o => {
+                            orderSelect.innerHTML += `<option value="${o.order_id}">Order #${o.order_id} - ${o.customer_name} (${o.status})</option>`;
+                        });
+                    }
+                } catch (e) {
+                    console.log("Gagal load reservasi/order", e);
+                }
             }
         }
+
+        // Pastikan loadDropdownData dipanggil secara aman saat halaman pertama kali dibuka
+        document.addEventListener('DOMContentLoaded', () => {
+            loadDropdownData();
+        });
 
         // Otomatis jalankan fungsi saat halaman pertama kali dibuka
         window.onload = loadDropdownData;
@@ -372,39 +408,110 @@
             }
         }
         // 5. Fungsi Buat Pesanan (Guest)
-        async function testBuatPesanan() {
-            const status = document.getElementById('order-status');
-            status.innerText = "Memproses pesanan...";
-            status.style.color = "orange";
+        // Fungsi 1: Untuk menambah baris input HTML ke dalam form
+        // Fungsi 1: Generate Baris Form Dinamis pake Dropdown
+        function tambahBarisPesanan() {
+            const wrapper = document.getElementById('items-wrapper');
+            const row = document.createElement('div');
+            row.className = 'order-item-row';
+            row.style = 'border: 1px solid #007bff; padding: 15px; margin-bottom: 10px; border-radius: 5px; background-color: #f8f9fa;';
+            
+            // Loop bikin pilihan Menu
+            let menuOptions = '<option value="">-- Klik untuk Pilih Menu --</option>';
+            globalMenus.forEach(m => {
+                menuOptions += `<option value="${m.id}">${m.menuName} (Rp ${m.price})</option>`;
+            });
 
-            // Bikin array items sesuai format controller
-            const payload = {
-                customer_name: document.getElementById('order_name').value,
-                table_number: document.getElementById('order_table').value,
-                items: [
-                    {
-                        menu_id: document.getElementById('order_menu_id').value,
-                        quantity: document.getElementById('order_qty').value
-                    }
-                ]
-            };
+            // Loop bikin Checkbox Add-ons
+            let addonCheckboxes = '';
+            globalAddons.forEach(a => {
+                addonCheckboxes += `<label style="display:inline-block; margin-right:15px; cursor:pointer;">
+                                      <input type="checkbox" class="addon-checkbox" value="${a.id}"> ${a.name} (+Rp ${a.price})
+                                    </label>`;
+            });
+
+            row.innerHTML = `
+                <select class="item-menu-id" onchange="updateVariantOptions(this)" style="width: 100%; margin-bottom: 10px; padding: 8px;">
+                    ${menuOptions}
+                </select>
+                
+                <select class="item-variant-id" style="width: 100%; margin-bottom: 10px; padding: 8px;">
+                    <option value="">-- Pilih Varian (Abaikan jika tidak ada) --</option>
+                </select>
+                
+                <input type="number" class="item-qty" placeholder="Jumlah Porsi" value="1" min="1" style="width: 100%; margin-bottom: 10px; padding: 8px;">
+                
+                <div style="margin-bottom: 10px; font-size: 14px; background: #fff; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
+                    <strong>Pilih Add-ons:</strong><br> ${addonCheckboxes || '<i>Tidak ada add-ons tersedia</i>'}
+                </div>
+                
+                <button type="button" onclick="this.parentElement.remove()" style="background-color: #dc3545; color: white; border: none; padding: 6px 12px; cursor: pointer; border-radius: 4px; font-weight: bold;">🗑️ Hapus Menu Ini</button>
+            `;
+            wrapper.appendChild(row);
+        }
+
+        // Fungsi 2: Mengumpulkan data dari form dinamis dan mengirim API
+        async function testSubmitOrder() {
+            const customerName = document.getElementById('order_customer').value;
+            const tableNumber = document.getElementById('order_table').value;
+            if (!customerName) {
+    alert("Eh, tunggu! Nama Pelanggan wajib diisi ya.");
+    return;
+}
+            const statusLabel = document.getElementById('order-status');
+            
+            const rows = document.querySelectorAll('.order-item-row');
+            let itemsPayload = [];
+
+            rows.forEach(row => {
+                const menuId = row.querySelector('.item-menu-id').value;
+                const variantId = row.querySelector('.item-variant-id').value;
+                const qty = row.querySelector('.item-qty').value;
+                
+                // Ambil semua Add-ons yang diceklis
+                const checkedAddons = row.querySelectorAll('.addon-checkbox:checked');
+                const addonsArray = Array.from(checkedAddons).map(cb => parseInt(cb.value));
+
+                if (menuId && qty) {
+                    let itemObj = {
+                        menu_id: parseInt(menuId),
+                        quantity: parseInt(qty)
+                    };
+                    if (variantId) itemObj.menu_variant_id = parseInt(variantId);
+                    if (addonsArray.length > 0) itemObj.add_ons = addonsArray;
+                    
+                    itemsPayload.push(itemObj);
+                }
+            });
+
+            if (itemsPayload.length === 0) {
+                alert("Harap pilih minimal 1 menu beserta jumlahnya!");
+                return;
+            }
+
+            statusLabel.innerText = "Mengirim pesanan...";
+            statusLabel.style.color = "orange";
 
             try {
                 const response = await fetch(`${API_URL}/orders`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-                    body: JSON.stringify(payload)
+                    body: JSON.stringify({ customer_name: customerName, table_number: tableNumber, items: itemsPayload })
                 });
+
                 const data = await response.json();
+
                 if (response.ok) {
-                    status.innerText = `Sukses: ${data.message} (Total: Rp ${data.total_price})`;
-                    status.style.color = "green";
+                    statusLabel.innerText = `Sukses! Nota #${data.order_id} | Total: Rp${data.total_price}`;
+                    statusLabel.style.color = "blue";
+                    loadDropdownData();
                 } else {
-                    status.innerText = `Gagal: Cek inputanmu!`;
-                    status.style.color = "red";
+                    statusLabel.innerText = `Gagal: Cek console untuk error.`;
+                    statusLabel.style.color = "red";
                 }
             } catch (error) {
-                status.innerText = "Error jaringan!";
+                statusLabel.innerText = "Error jaringan!";
+                statusLabel.style.color = "red";
             }
         }
 

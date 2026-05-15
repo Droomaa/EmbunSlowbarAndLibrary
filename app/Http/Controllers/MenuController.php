@@ -11,7 +11,7 @@ class MenuController extends Controller
 {
     public function index(): JsonResponse
     {
-        $menus = Menu::all()->map(function ($menu) {
+        $menus = Menu::with('variants')->get()->map(function ($menu) {
             $menu->image_url = $menu->image ? asset('storage/' . $menu->image) : null;
             return $menu;
         });
