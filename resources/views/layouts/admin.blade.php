@@ -65,7 +65,13 @@
 
         <div style="border-top: 1px solid #ddd; padding-top: 15px;">
             <a href="#" class="nav-link" style="color: #555;">⚙️ Settings</a>
-            <a href="#" class="nav-link" style="color: #dc3545;" onclick="localStorage.removeItem('embun_token'); window.location.href='/';">🚪 Logout</a>
+            <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
+    @csrf
+</form>
+
+<a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();" style="color: #dc3545; text-decoration: none; font-weight: bold; display: flex; align-items: center; gap: 10px; padding: 10px;">
+    🚪 Logout
+</a>
         </div>
     </div>
 

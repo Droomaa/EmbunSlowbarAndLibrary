@@ -43,7 +43,13 @@
         <a href="/owner/transactions" class="nav-link {{ request()->is('owner/transactions') ? 'active' : '' }}">Transactions</a>
         
         <div style="margin-top: 50px;">
-            <a href="#" class="nav-link" style="color: #dc3545;" onclick="logout()">Logout</a>
+            <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
+    @csrf
+</form>
+
+<a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();" style="color: #dc3545; text-decoration: none; font-weight: bold; display: flex; align-items: center; gap: 10px; padding: 10px;">
+    🚪 Logout
+</a>
         </div>
     </div>
 

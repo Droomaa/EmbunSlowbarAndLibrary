@@ -36,12 +36,19 @@
             <a href="/karyawan/stok" class="nav-link {{ request()->is('karyawan/stok') ? 'active' : '' }}">Data Stok Bahan</a>
             <a href="/karyawan/reservasi" class="nav-link {{ request()->is('karyawan/reservasi') ? 'active' : '' }}">Verifikasi Reservasi</a>
             <a href="/karyawan/online" class="nav-link {{ request()->is('karyawan/online') ? 'active' : '' }}">Pesanan Online Masuk</a>
+            <a href="/karyawan/offline" class="nav-link {{ request()->is('karyawan/Offline') ? 'active' : '' }}">Pesanan Offline Masuk</a>
             <a href="#" class="nav-link">Pengiriman Stok Bahan</a>
         </div>
         
         <div style="border-top: 1px solid #ddd; padding-top: 15px;">
             <a href="#" class="nav-link">⚙️ Settings</a>
-            <a href="#" class="nav-link text-red">🚪 Logout</a>
+            <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
+    @csrf
+</form>
+
+<a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();" style="color: #dc3545; text-decoration: none; font-weight: bold; display: flex; align-items: center; gap: 10px; padding: 10px;">
+    🚪 Logout
+</a>
         </div>
     </div>
 

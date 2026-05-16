@@ -2,81 +2,54 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
-use App\Models\Customer;
 use Illuminate\Http\Request;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Auth;
 
 class AuthController extends Controller
 {
-    public function register(Request $request): JsonResponse
+    public function showLogin()
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'username' => 'required|string|max:255|unique:users',
-            'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:8',
-            'role' => 'required|in:Owner,Admin,Staff,Customer',
-            'noHP' => 'required_if:role,Customer'
-        ]);
-
-        $user = User::create([
-            'name' => $request->name,
-            'username' => $request->username,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-            'role' => $request->role,
-        ]);
-
-        if ($request->role === 'Customer') {
-            Customer::create([
-                'name' => $request->name,
-                'noHP' => $request->noHP,
-            ]);
+        if (Auth::check()) {
+            return $this->redirectBerdasarkanRole(Auth::user()->role);
         }
-
-        $token = $user->createToken('auth_token')->plainTextToken;
-
-        return response()->json([
-            'message' => 'Register berhasil!',
-            'access_token' => $token,
-            'token_type' => 'Bearer',
-            'user' => $user
-        ], 201);
+        return view('login');
     }
 
-    public function login(Request $request): JsonResponse
+    public function login(Request $request)
     {
-        $request->validate([
-            'username' => 'required|string',
-            'password' => 'required|string',
+        $credentials = $request->validate([
+            'username' => 'required',
+            'password' => 'required'
         ]);
 
-        $user = User::where('username', $request->username)->first();
-
-        if (!$user || !Hash::check($request->password, $user->password)) {
-            return response()->json([
-                'message' => 'Username atau password salah!'
-            ], 401);
+        if (Auth::attempt($credentials)) {
+            $request->session()->regenerate();
+            
+            return $this->redirectBerdasarkanRole(Auth::user()->role);
         }
 
-        $token = $user->createToken('auth_token')->plainTextToken;
-
-        return response()->json([
-            'message' => 'Login berhasil!',
-            'access_token' => $token,
-            'token_type' => 'Bearer',
-            'user' => $user
-        ], 200);
+        return back()->withErrors([
+            'username' => 'Username atau password salah nih!',
+        ]);
     }
 
-    public function logout(Request $request): JsonResponse
+    public function logout(Request $request)
     {
-        $request->user()->currentAccessToken()->delete();
+        Auth::logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+        return redirect('/');
+    }
 
-        return response()->json([
-            'message' => 'Logout berhasil!'
-        ], 200);
+    private function redirectBerdasarkanRole($role)
+    {
+        $roleAman = strtolower(trim($role));
+
+        if ($roleAman === 'admin') return redirect('/admin/dashboard');
+        if ($roleAman === 'staff') return redirect('/karyawan/dashboard');
+        if ($roleAman === 'owner') return redirect('/owner/dashboard');
+        
+        Auth::logout();
+        return redirect('/login')->with('error', 'Role akun Anda tidak dikenali sistem: ' . $role);
     }
 }

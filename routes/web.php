@@ -1,16 +1,16 @@
 <?php
 
+use App\Http\Controllers\AuthController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('welcome');
-});
+Route::get('/', function () { return view('landing'); });
+Route::get('/menu', function () { return view('customer.menu'); });
 
-Route::get('/test-ui', function () {
-    return view('test');
-});
+Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
+Route::post('/login', [AuthController::class, 'login']);
+Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
-Route::prefix('owner')->group(function () {
+Route::middleware(['auth', 'role:owner'])->prefix('owner')->group(function () {
     Route::get('/dashboard', function () { return view('owner.dashboard'); });
     Route::get('/accounts', function () { return view('owner.accounts'); });
     Route::get('/menu', function () { return view('owner.menu'); });
@@ -19,18 +19,18 @@ Route::prefix('owner')->group(function () {
     Route::get('/stock', function () { return view('owner.stock'); });
 });
 
-Route::prefix('admin')->group(function () {
+Route::middleware(['auth', 'role:admin'])->prefix('admin')->group(function () {
     Route::get('/dashboard', function () { return view('admin.dashboard'); });
     Route::get('/penjualan', function () { return view('admin.penjualan'); });
     Route::get('/stok', function () { return view('admin.stok'); });
     Route::get('/transaksi', function () { return view('admin.transaksi'); });
 });
 
-Route::prefix('karyawan')->group(function () {
+Route::middleware(['auth', 'role:staff'])->prefix('karyawan')->group(function () {
     Route::get('/dashboard', function () { return view('karyawan.dashboard'); });
     Route::get('/stok', function () { return view('karyawan.stok'); });
     Route::get('/reservasi', function () { return view('karyawan.reservasi'); });
     Route::get('/online', function () { return view('karyawan.online'); });
-    
     Route::get('/kasir', function () { return view('karyawan.kasir'); });
+    Route::get('/offline', function () { return view('karyawan.offline'); });
 });

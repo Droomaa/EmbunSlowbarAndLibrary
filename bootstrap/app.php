@@ -13,13 +13,11 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
         
-        // DAFTARKAN ALIAS MIDDLEWARE ROLE KITA DI SINI
         $middleware->alias([
-            'role' => \App\Http\Middleware\RoleMiddleware::class,
+            'role' => \App\Http\Middleware\CheckRole::class,
         ]);
         
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //
     })->create();
-    
