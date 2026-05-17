@@ -20,7 +20,8 @@ Route::get('/karyawan/orders/offline', [KaryawanKasirController::class, 'getOffl
 Route::post('/karyawan/orders/{id}/status', [KaryawanKasirController::class, 'updateOrderStatus']);
 Route::get('/karyawan/pos/menus', [KaryawanKasirController::class, 'getMenus']);
 Route::post('/karyawan/pos/checkout', [KaryawanKasirController::class, 'checkout']);
-Route::get('/karyawan/reservations', [KaryawanReservasiController::class, 'index']);
+Route::get('/karyawan/reservations/data', [KaryawanReservasiController::class, 'index']);
+Route::post('/karyawan/reservations/{id}/status', [KaryawanReservasiController::class, 'updateStatus']);
 Route::get('/karyawan/online-orders', [KaryawanOnlineController::class, 'index']);
 Route::get('/admin/stock-report', [AdminStokController::class, 'index']);
 Route::get('/admin/sales-report', [AdminPenjualanController::class, 'index']);
