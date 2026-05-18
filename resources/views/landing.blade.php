@@ -43,6 +43,8 @@
         <a href="/login" class="btn btn-outline">Login</a>
         
         <a href="/menu" class="btn btn-primary">Pesan Sekarang!</a>
+
+        <a href="/reservasi" class="btn btn-primary">Reservasi Sekarang!</a>
     </div>
 
 </body>

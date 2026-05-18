@@ -77,6 +77,26 @@ class KaryawanKasirController extends Controller
                     
         return response()->json(['data' => $orders], 200);
     }
+    // API: Ambil Pesanan Online (Delivery & Pickup)
+    public function getOnlineOrders()
+    {
+        $orders = DB::table('orders')
+                    // Filter khusus tipe Delivery atau Pickup
+                    ->whereIn('order_type', ['Delivery', 'Pickup', 'Pick Up'])
+                    ->orderBy('created_at', 'desc')
+                    ->get();
+                    
+        // Hitung total pesanan hari ini khusus online (buat angka hijau di kanan atas UI kamu)
+        $totalToday = DB::table('orders')
+                    ->whereIn('order_type', ['Delivery', 'Pickup', 'Pick Up'])
+                    ->whereDate('created_at', \Carbon\Carbon::today())
+                    ->count();
+
+        return response()->json([
+            'data' => $orders,
+            'total_today' => $totalToday
+        ], 200);
+    }
 
     // API: Update Status Pesanan (Bisa dari semua page Karyawan)
     public function updateOrderStatus(Request $request, $id)

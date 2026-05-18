@@ -17,6 +17,7 @@ use App\Http\Controllers\OrderController;
 use App\Http\Controllers\InventoryController;
 
 Route::get('/karyawan/orders/offline', [KaryawanKasirController::class, 'getOfflineOrders']);
+Route::get('/karyawan/orders/online', [KaryawanKasirController::class, 'getOnlineOrders']);
 Route::post('/karyawan/orders/{id}/status', [KaryawanKasirController::class, 'updateOrderStatus']);
 Route::get('/karyawan/pos/menus', [KaryawanKasirController::class, 'getMenus']);
 Route::post('/karyawan/pos/checkout', [KaryawanKasirController::class, 'checkout']);

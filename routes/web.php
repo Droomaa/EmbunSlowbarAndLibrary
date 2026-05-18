@@ -10,6 +10,9 @@ Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
+Route::get('/reservasi', function () { return view('customer.reservasi'); });
+Route::post('/reservasi', [\App\Http\Controllers\KaryawanReservasiController::class, 'storeCustomerReservation']);
+
 Route::middleware(['auth', 'role:owner'])->prefix('owner')->group(function () {
     Route::get('/dashboard', function () { return view('owner.dashboard'); });
     Route::get('/accounts', function () { return view('owner.accounts'); });

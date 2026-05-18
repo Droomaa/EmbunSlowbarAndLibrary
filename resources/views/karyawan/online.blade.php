@@ -37,9 +37,15 @@
 
     </div>
 @endsection
+
 @section('scripts')
 <script>
-    document.addEventListener('DOMContentLoaded', async () => {
+    // Ganti nama konstan agar tidak bentrok dengan layouts.karyawan
+    const API_URL_ONLINE = 'http://127.0.0.1:8000/api';
+    
+    document.addEventListener('DOMContentLoaded', loadOnlineOrders);
+
+    async function loadOnlineOrders() {
         const token = localStorage.getItem('embun_token');
         const container = document.getElementById('kanban-container');
 
@@ -48,7 +54,8 @@
         };
 
         try {
-            const response = await fetch(`${API_URL}/karyawan/online-orders`, {
+            // Arahkan ke endpoint khusus online yang baru dibuat
+            const response = await fetch(`${API_URL_ONLINE}/karyawan/orders/online`, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Accept': 'application/json'
@@ -58,12 +65,14 @@
             const result = await response.json();
             
             if (response.ok) {
-                const data = result.data;
+                // Sesuaikan dengan struktur JSON dari controller baru
+                const orders = result.data;
+                const totalToday = result.total_today;
 
-                document.getElementById('val-total-orders').innerText = data.total_pesanan || 0;
+                document.getElementById('val-total-orders').innerText = totalToday || 0;
 
-                if (data.pesanan && data.pesanan.length > 0) {
-                    data.pesanan.slice().reverse().forEach(trx => {
+                if (orders && orders.length > 0) {
+                    orders.slice().reverse().forEach(trx => {
                         const dateObj = new Date(trx.created_at);
                         const timeString = `${dateObj.getHours().toString().padStart(2, '0')}:${dateObj.getMinutes().toString().padStart(2, '0')}`;
                         
@@ -78,24 +87,34 @@
                                     </div>
                                 `;
                             });
+                        } else {
+                            // Fallback jika API belum mengirim relasi items
+                            itemsHtml = '<div style="color: #888; font-style: italic;">Memuat detail item...</div>';
                         }
 
-                        const isDelivery = Math.random() > 0.5;
-                        const borderColor = isDelivery ? '#4c7c5f' : '#fdf5d3';
-                        const typeLabel = isDelivery ? 'Delivery' : 'Pickup';
-                        const btnStyle = isDelivery ? 'btn-primary' : 'btn-outline';
-                        const btnText = isDelivery ? '✔️ Terima Pesanan' : '✔️ Selesaikan';
+                        // Deteksi tipe order asli dari database
+                        const orderType = trx.order_type || 'Pickup';
+                        const isDelivery = orderType.toLowerCase() === 'delivery';
+                        
+                        const borderColor = isDelivery ? '#4c7c5f' : '#f39c12';
+                        const typeLabel = orderType;
+                        const btnText = isDelivery ? '✔️ Kirim Pesanan' : '✔️ Selesaikan';
+                        
+                        // Styling tombol inline agar konsisten
+                        const btnStyle = isDelivery
+                            ? 'background: #4c7c5f; color: white; border: none;'
+                            : 'background: transparent; color: #4c7c5f; border: 1px solid #4c7c5f;';
 
                         const card = document.createElement('div');
                         card.className = 'card';
-                        card.style.cssText = `border-top: 4px solid ${borderColor}; position: relative;`;
+                        card.style.cssText = `border-top: 4px solid ${borderColor}; position: relative; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05);`;
                         
                         card.innerHTML = `
-                            <span style="position: absolute; top: 15px; right: 15px; background: #eee; padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: bold;">${typeLabel}</span>
+                            <span style="position: absolute; top: 15px; right: 15px; background: #eee; padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; color: #555;">${typeLabel}</span>
                             <p style="font-size: 11px; color: #888; margin: 0;">ORDER ID #EB-${trx.order_id}</p>
-                            <h3 style="margin: 5px 0 15px 0;">${trx.customer_name}</h3>
+                            <h3 style="margin: 5px 0 15px 0; color: #333;">${trx.customer_name}</h3>
                             
-                            <div style="background: #f9f9f9; padding: 10px; border-radius: 6px; margin-bottom: 15px; font-size: 13px;">
+                            <div style="background: #f9f9f9; padding: 10px; border-radius: 6px; margin-bottom: 15px; font-size: 13px; color: #555;">
                                 ${itemsHtml}
                             </div>
                             
@@ -103,7 +122,8 @@
                                 <span style="color: #888; font-size: 12px;">TOTAL</span><strong style="color: #4c7c5f; font-size: 18px;">${formatRupiah(trx.total_price)}</strong>
                             </div>
                             <p style="font-size: 11px; color: #888; margin-bottom: 15px;">🕒 Masuk pukul ${timeString} WIB</p>
-                            <button class="${btnStyle}" style="width: 100%;">${btnText}</button>
+                            
+                            <button onclick="ubahStatus(${trx.order_id}, 'Completed')" style="width: 100%; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.2s; ${btnStyle}">${btnText}</button>
                         `;
 
                         // Masukkan kartu ke urutan paling depan (sebelum kartu performa)
@@ -114,6 +134,34 @@
         } catch (error) {
             console.error("Gagal memuat pesanan online:", error);
         }
-    });
+    }
+
+    // Fungsi untuk merubah status dari Pending menjadi Completed
+    window.ubahStatus = async function(id, newStatus) {
+        if(!confirm(`Yakin menyelesaikan pesanan ini?`)) return;
+
+        const token = localStorage.getItem('embun_token');
+        try {
+            const response = await fetch(`${API_URL_ONLINE}/karyawan/orders/${id}/status`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({ status: newStatus })
+            });
+
+            if(response.ok) {
+                // Refresh halaman untuk memperbarui kanban board
+                location.reload();
+            } else {
+                alert("Gagal merubah status pesanan.");
+            }
+        } catch (error) {
+            alert("Terjadi kesalahan koneksi server.");
+            console.error(error);
+        }
+    }
 </script>
 @endsection

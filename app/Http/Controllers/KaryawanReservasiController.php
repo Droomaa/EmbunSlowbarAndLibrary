@@ -45,4 +45,26 @@ class KaryawanReservasiController extends Controller
         
         return response()->json(['message' => 'Status reservasi berhasil diperbarui!'], 200);
     }
+
+    // API PUBLIK: Menyimpan data reservasi dari Form Customer
+    public function storeCustomerReservation(Request $request)
+    {
+        // Karena di database kamu kolom reservation_date bertipe DATETIME,
+        // kita gabungkan input tanggal dan jam dari customer jadi satu format yang pas.
+        $datetime = $request->input('tanggal') . ' ' . $request->input('jam') . ':00';
+
+        \App\Models\Reservation::insert([
+            'customer_name' => $request->input('nama'),
+            'phone_number' => $request->input('telepon'),
+            'reservation_date' => $datetime,
+            'pax' => $request->input('pax'),
+            'notes' => $request->input('notes', 'Tidak ada catatan'),
+            'status' => 'Pending', // Default status selalu Pending
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        // Kembalikan ke halaman form dengan pesan sukses
+        return back()->with('success', '🎉 Hore! Permintaan reservasi kamu berhasil dikirim. Silakan tunggu konfirmasi dari tim kami ya!');
+    }
 }
