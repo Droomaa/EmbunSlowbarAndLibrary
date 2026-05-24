@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\KaryawanOnlineController;
+use App\Http\Controllers\OwnerDashboardController;
 use App\Http\Controllers\KaryawanReservasiController;
 use App\Http\Controllers\KaryawanKasirController;
 use App\Http\Controllers\AdminDashboardController;
@@ -15,6 +16,18 @@ use App\Http\Controllers\MenuController;
 use App\Http\Controllers\ReservationController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\InventoryController;
+
+Route::get('/owner/dashboard/data', [OwnerDashboardController::class, 'getOverview']);
+Route::get('/owner/reports/data', [OwnerDashboardController::class, 'getSalesReports']);
+Route::get('/owner/stock/data', [OwnerDashboardController::class, 'getStockReports']);
+Route::get('/owner/accounts/data', [OwnerDashboardController::class, 'getAccounts']);
+Route::post('/owner/accounts/add', [OwnerDashboardController::class, 'storeAccount']);
+Route::get('/owner/menus/data', [OwnerDashboardController::class, 'getMenus']);
+Route::post('/owner/menus/add', [OwnerDashboardController::class, 'storeMenu']);
+Route::put('/owner/menus/{id}', [OwnerDashboardController::class, 'updateMenu']);
+Route::delete('/owner/menus/{id}', [OwnerDashboardController::class, 'deleteMenu']);
+Route::get('/owner/transactions/data', [OwnerDashboardController::class, 'getTransactions']);
+Route::put('/owner/transactions/{id}/status', [OwnerDashboardController::class, 'updateTransactionStatus']);
 
 Route::get('/karyawan/orders/offline', [KaryawanKasirController::class, 'getOfflineOrders']);
 Route::get('/karyawan/orders/online', [KaryawanKasirController::class, 'getOnlineOrders']);

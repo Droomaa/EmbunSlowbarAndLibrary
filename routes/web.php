@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\AuthController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\OwnerDashboardController;
+
 
 Route::get('/', function () { return view('landing'); });
 Route::get('/menu', function () { return view('customer.menu'); });
@@ -13,6 +15,9 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 Route::get('/reservasi', function () { return view('customer.reservasi'); });
 Route::post('/reservasi', [\App\Http\Controllers\KaryawanReservasiController::class, 'storeCustomerReservation']);
 
+Route::get('/owner/reports/export', [OwnerDashboardController::class, 'exportSalesReports']);
+Route::get('/owner/transactions/export', [OwnerDashboardController::class, 'exportTransactions']);
+
 Route::middleware(['auth', 'role:owner'])->prefix('owner')->group(function () {
     Route::get('/dashboard', function () { return view('owner.dashboard'); });
     Route::get('/accounts', function () { return view('owner.accounts'); });
@@ -20,6 +25,7 @@ Route::middleware(['auth', 'role:owner'])->prefix('owner')->group(function () {
     Route::get('/transactions', function () { return view('owner.transactions'); });
     Route::get('/reports', function () { return view('owner.reports'); });
     Route::get('/stock', function () { return view('owner.stock'); });
+    
 });
 
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->group(function () {

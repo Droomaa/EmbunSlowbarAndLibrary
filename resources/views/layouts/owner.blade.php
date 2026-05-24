@@ -37,19 +37,19 @@
         
         <a href="/owner/dashboard" class="nav-link {{ request()->is('owner/dashboard') ? 'active' : '' }}">Dashboard</a>
         <a href="/owner/reports" class="nav-link {{ request()->is('owner/reports') ? 'active' : '' }}">Sales Reports</a>
-        <a href="/owner/stock" class="nav-link {{ request()->is('owner/stock') ? 'active' : '' }}"">Stock Reports</a>
+        <a href="/owner/stock" class="nav-link {{ request()->is('owner/stock') ? 'active' : '' }}">Stock Reports</a>
         <a href="/owner/accounts" class="nav-link {{ request()->is('owner/accounts') ? 'active' : '' }}">Accounts</a>
         <a href="/owner/menu" class="nav-link {{ request()->is('owner/menu') ? 'active' : '' }}">Menu</a>
         <a href="/owner/transactions" class="nav-link {{ request()->is('owner/transactions') ? 'active' : '' }}">Transactions</a>
         
         <div style="margin-top: 50px;">
             <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
-    @csrf
-</form>
+                @csrf
+            </form>
 
-<a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();" style="color: #dc3545; text-decoration: none; font-weight: bold; display: flex; align-items: center; gap: 10px; padding: 10px;">
-    🚪 Logout
-</a>
+            <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();" style="color: #dc3545; text-decoration: none; font-weight: bold; display: flex; align-items: center; gap: 10px; padding: 10px;">
+                🚪 Logout
+            </a>
         </div>
     </div>
 
@@ -57,7 +57,7 @@
         <div class="topbar">
             <h3>@yield('title')</h3>
             <div>
-                <input type="text" placeholder="Search data..." style="padding: 8px; border-radius: 4px; border: 1px solid #ccc;">
+                <input type="text" id="global-search-input" placeholder="Search data..." style="padding: 8px; border-radius: 4px; border: 1px solid #ccc; outline: none; width: 250px;">
             </div>
         </div>
 
@@ -67,7 +67,40 @@
 
     <script>
         const API_URL = 'http://127.0.0.1:8000/api';
-        // Fungsi JS global (seperti cek token atau logout) bisa ditaruh di sini
+        
+        // Logika Global Search Bar
+        document.addEventListener('DOMContentLoaded', () => {
+            setupGlobalSearch();
+        });
+
+        function setupGlobalSearch() {
+            const searchInput = document.getElementById('global-search-input');
+            
+            if(searchInput) {
+                searchInput.addEventListener('keyup', function() {
+                    const filter = searchInput.value.toLowerCase();
+                    
+                    // Otomatis mencari semua tag <tbody> di halaman yang sedang aktif
+                    const tableBodies = document.getElementsByTagName('tbody');
+
+                    // Loop untuk setiap tabel yang ada di halaman
+                    for (let t = 0; t < tableBodies.length; t++) {
+                        const rows = tableBodies[t].getElementsByTagName('tr');
+
+                        // Loop untuk menyembunyikan/menampilkan baris sesuai ketikan
+                        for (let i = 0; i < rows.length; i++) {
+                            const rowText = rows[i].innerText.toLowerCase();
+                            if (rowText.includes(filter)) {
+                                rows[i].style.display = '';
+                            } else {
+                                rows[i].style.display = 'none';
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
         function logout() {
             localStorage.removeItem('embun_token');
             alert('Logout berhasil!');

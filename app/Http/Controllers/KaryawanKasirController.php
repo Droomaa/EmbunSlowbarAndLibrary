@@ -29,15 +29,19 @@ class KaryawanKasirController extends Controller
             }
             $tax = $calculatedSubtotal * 0.10;
             $finalTotalPrice = $calculatedSubtotal + $tax;
+            
             // Bikin record Order (Struk)
             $order = new Order();
             $order->customer_name = $request->input('customer_name', 'Walk-in Customer');
             
-            // --- BUKA COMMENT UNTUK MENYIMPAN MEJA & PEMBAYARAN ---
+            // --- DATA MEJA & PEMBAYARAN ---
             $order->table_number = $request->input('table_number');
             $order->order_type = $request->input('order_type', 'Dine In');
-            // $order->payment_method = $request->input('payment_method', 'Tunai'); // Default Tunai, tapi dari QR akan ngirim 'QRIS'
-            $order->status = 'Pending'; // Kalau dari QR, statusnya 'Pending' nunggu dikonfirmasi kasir/dapur
+            
+            // BARI INI SUDAH DIBUKA KUNCINYA (Tanda // dihapus) 👇
+            $order->payment_method = $request->input('payment_method', 'Tunai');
+            
+            $order->status = 'Pending';
             // ------------------------------------------------------
             
             $order->total_price = $finalTotalPrice;
