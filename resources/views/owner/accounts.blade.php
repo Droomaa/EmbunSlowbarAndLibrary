@@ -136,8 +136,8 @@
                 if(result.users && result.users.length > 0) {
                     result.users.forEach(user => {
                         const role = user.role || 'Karyawan';
-                        const badgeColor = role.toLowerCase() === 'owner' || role.toLowerCase() === 'admin' 
-                                           ? 'background: #e6f4ea; color: #1e8e3e;' 
+                        const badgeColor = role.toLowerCase() === 'owner' || role.toLowerCase() === 'admin'
+                                           ? 'background: #e6f4ea; color: #1e8e3e;'
                                            : 'background: #fdfdfa; color: #555; border: 1px solid #ddd;';
                         
                         // Menyesuaikan jika di database kamu namanya 'email' atau 'username'
@@ -185,10 +185,10 @@
         try {
             const response = await fetch(`${API_URL_ACC}/owner/accounts/add`, {
                 method: 'POST',
-                headers: { 
-                    'Authorization': `Bearer ${token}`, 
+                headers: {
+                    'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json',
-                    'Accept': 'application/json' 
+                    'Accept': 'application/json'
                 },
                 body: JSON.stringify(data)
             });
@@ -196,7 +196,7 @@
             if (response.ok) {
                 alert('Berhasil! Akun baru telah ditambahkan.');
                 closeModal();
-                loadAccountsData(); 
+                loadAccountsData();
             } else {
                 // Tangkap pesan error dari CCTV Controller
                 const errData = await response.json();

@@ -22,8 +22,8 @@
         .product-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-top: 20px; }
         .product-card { background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.05); position: relative; transition: 0.2s; }
         .product-card:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
-        .product-img { height: 120px; background: #e2e8e4; width: 100%; display: flex; align-items: center; justify-content: center; font-size: 30px; color: #4c7c5f; opacity: 0.5; }
-        .status-badge { position: absolute; top: 10px; right: 10px; background: #e6f4ea; color: #1e8e3e; font-size: 10px; padding: 4px 8px; border-radius: 10px; font-weight: bold; }
+        .product-img { height: 120px; background: #e2e8e4; width: 100%; display: flex; align-items: center; justify-content: center; font-size: 30px; color: #4c7c5f; overflow: hidden; }
+        .status-badge { position: absolute; top: 10px; right: 10px; background: #e6f4ea; color: #1e8e3e; font-size: 10px; padding: 4px 8px; border-radius: 10px; font-weight: bold; z-index: 2; }
         
         /* Kolom Tengah: Cart */
         .col-cart { flex: 3; background: #fdfdfa; border-left: 1px solid #eee; border-right: 1px solid #eee; display: flex; flex-direction: column; }
@@ -176,15 +176,21 @@
             grid.innerHTML = '';
 
             menus.forEach(menu => {
-                // Handle variasi nama kolom database (menuName atau name, price atau harga)
                 const id = menu.id || menu.menu_id;
                 const name = menu.menuName || menu.name || 'Menu Baru';
                 const price = parseFloat(menu.price || menu.harga || 0);
 
+                // LOGIKA GAMBAR BARU: Jika ada gambar, tampilkan fotonya. Jika tidak, pakai emoji.
+                const imageContent = menu.image 
+                    ? `<img src="/storage/${menu.image}" style="width: 100%; height: 100%; object-fit: cover;">` 
+                    : `<span style="opacity: 0.5;">🍔</span>`;
+
                 grid.innerHTML += `
                     <div class="product-card">
                         <span class="status-badge">Tersedia</span>
-                        <div class="product-img">🍔</div>
+                        <div class="product-img">
+                            ${imageContent}
+                        </div>
                         <div style="padding: 15px;">
                             <strong style="display: block; margin-bottom: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${name}">${name}</strong>
                             <span style="color: #888; font-size: 13px;">${formatRupiah(price)}</span>

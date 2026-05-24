@@ -227,10 +227,15 @@
             });
 
             if (response.ok) {
+                // 👇 TAMBAHKAN DUA BARIS INI UNTUK MUNCULIN ALERT 👇
+                const dataRes = await response.json();
+                alert(dataRes.message);
+                
                 closeModal();
                 loadTransactions();
             } else {
-                alert('Gagal mengubah status.');
+                const errData = await response.json();
+                alert('ERROR: ' + (errData.error || 'Gagal mengubah status.'));
             }
         } catch (error) {
             alert('Kesalahan jaringan.');

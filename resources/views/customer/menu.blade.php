@@ -224,7 +224,7 @@
 
                 if(res.ok) {
                     alert('🎉 PEMBAYARAN BERHASIL!\nPesanan sedang disiapkan dapur. Mohon ditunggu di Meja ' + customerData.meja);
-                    window.location.href = '/'; 
+                    window.location.href = '/';
                 } else {
                     alert('❌ Gagal memproses pesanan.');
                 }

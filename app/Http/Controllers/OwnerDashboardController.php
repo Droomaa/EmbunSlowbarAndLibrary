@@ -131,7 +131,7 @@ class OwnerDashboardController extends Controller
     {
         try {
             // Tangkap input dari frontend
-            $inputUserEmail = $request->input('username'); 
+            $inputUserEmail = $request->input('username');
             
             // Logika pintar: Kalau ada '@', ambil teks sebelum '@' sebagai username
             // Contoh: gavra@gmail.com -> username-nya 'gavra'
@@ -188,16 +188,24 @@ class OwnerDashboardController extends Controller
         ], 200);
     }
 
-    // 2. Tambah Menu Baru
+   // 2. Tambah Menu Baru (Dengan Gambar)
     public function storeMenu(Request $request)
     {
         try {
+            $imagePath = null;
+            // Cek apakah ada file gambar yang diupload
+            if ($request->hasFile('image')) {
+                // Simpan gambar ke folder storage/app/public/menus
+                $imagePath = $request->file('image')->store('menus', 'public');
+            }
+
             DB::table('menus')->insert([
                 'menuName' => $request->input('menuName'),
                 'category' => $request->input('category'),
                 'price' => $request->input('price'),
                 'status' => $request->input('status', 'Available'),
                 'description' => $request->input('description', ''),
+                'image' => $imagePath, // Simpan path gambar ke database
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
@@ -207,18 +215,25 @@ class OwnerDashboardController extends Controller
         }
     }
 
-    // 3. Edit Menu
+    // 3. Edit Menu (Dengan Gambar)
     public function updateMenu(Request $request, $id)
     {
         try {
-            DB::table('menus')->where('id', $id)->update([
+            $data = [
                 'menuName' => $request->input('menuName'),
                 'category' => $request->input('category'),
                 'price' => $request->input('price'),
                 'status' => $request->input('status'),
                 'description' => $request->input('description', ''),
                 'updated_at' => now(),
-            ]);
+            ];
+
+            // Jika owner mengupload gambar baru saat edit
+            if ($request->hasFile('image')) {
+                $data['image'] = $request->file('image')->store('menus', 'public');
+            }
+
+            DB::table('menus')->where('id', $id)->update($data);
             return response()->json(['message' => 'Menu berhasil diperbarui!'], 200);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
@@ -250,13 +265,57 @@ class OwnerDashboardController extends Controller
     public function updateTransactionStatus(Request $request, $id)
     {
         try {
+            DB::beginTransaction();
+
+            $order = DB::table('orders')->where('order_id', $id)->first();
+            if (!$order) {
+                return response()->json(['message' => 'Pesanan tidak ditemukan'], 404);
+            }
+
+            $newStatus = $request->input('status');
+            $pesanLaporan = "Status berhasil diubah.";
+
+            // LOGIKA PENGURANGAN STOK
+            if ($order->status !== 'Completed' && $newStatus === 'Completed') {
+                
+                $orderItems = DB::table('order_items')->where('order_id', $id)->get();
+                $jumlahItemDitemukan = $orderItems->count();
+                $jumlahBahanDipotong = 0;
+
+                foreach ($orderItems as $item) {
+                    $ingredients = DB::table('menu_ingredients')
+                        ->where('menu_id', $item->menu_id)
+                        ->get();
+
+                    foreach ($ingredients as $ingredient) {
+                        $totalUsed = $ingredient->quantity_needed * $item->quantity;
+
+                        DB::table('inventories')
+                            ->where('id', $ingredient->inventory_id)
+                            ->decrement('quantity', $totalUsed);
+                        
+                        $jumlahBahanDipotong++;
+                    }
+                }
+                
+                // Laporan investigasi dikirim ke layar!
+                $pesanLaporan = "BERHASIL! Ditemukan $jumlahItemDitemukan menu di pesanan ini, dan $jumlahBahanDipotong bahan baku telah dipotong dari gudang.";
+            } else if ($newStatus === 'Completed') {
+                $pesanLaporan = "Status diubah, tapi stok TIDAK dipotong karena pesanan ini sebelumnya sudah Completed (mencegah potong stok dobel).";
+            }
+
+            // Update status
             DB::table('orders')->where('order_id', $id)->update([
-                'status' => $request->input('status'),
+                'status' => $newStatus,
                 'updated_at' => now()
             ]);
-            return response()->json(['message' => 'Status berhasil diubah!'], 200);
+
+            DB::commit();
+            return response()->json(['message' => $pesanLaporan], 200);
+
         } catch (\Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 500);
+            DB::rollBack();
+            return response()->json(['error' => 'Gagal memproses stok: ' . $e->getMessage()], 500);
         }
     }
 

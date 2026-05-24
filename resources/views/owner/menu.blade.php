@@ -94,6 +94,7 @@
                     <label>Menu Name</label>
                     <input type="text" id="input-name" class="form-control" placeholder="Contoh: Caramel Macchiato" required>
                 </div>
+                
                 <div class="form-group">
                     <label>Description</label>
                     <input type="text" id="input-desc" class="form-control" placeholder="Contoh: Classic Espresso Base">
@@ -113,6 +114,23 @@
                         <label>Price (Rp)</label>
                         <input type="number" id="input-price" class="form-control" placeholder="32000" required>
                     </div>
+                </div>
+                <div class="form-group">
+    <label>Resep (Bahan Baku & Takaran)</label>
+    <div id="ingredient-list">
+        </div>
+    <div style="display: flex; gap: 5px; margin-top: 10px;">
+        <select id="select-inventory" class="form-control">
+            </select>
+        <input type="number" id="input-qty-needed" class="form-control" placeholder="Qty">
+        <button type="button" onclick="addIngredientRow()" style="background:#4c7c5f; color:white; border:none; border-radius:6px; padding:0 15px;">+</button>
+    </div>
+</div>
+
+                <div class="form-group">
+                    <label>Menu Image</label>
+                    <input type="file" id="input-image" class="form-control" accept="image/*">
+                    <small style="color: #888; font-size: 11px;">Biarkan kosong jika tidak ingin mengubah gambar.</small>
                 </div>
 
                 <div class="form-group">
@@ -199,30 +217,30 @@
         }
     }
 
-    // Render Tabel + Fitur Filter Kategori
     function renderTable() {
         const tbody = document.getElementById('menu-tbody');
         const filterVal = document.getElementById('filter-category').value;
         tbody.innerHTML = '';
 
-        // Filter data array
-        const filteredMenus = filterVal === 'All' 
-            ? allMenus
-            : allMenus.filter(m => m.category === filterVal);
+        const filteredMenus = filterVal === 'All' ? allMenus : allMenus.filter(m => m.category === filterVal);
 
         if(filteredMenus.length > 0) {
             filteredMenus.forEach(menu => {
                 const isAvailable = menu.status === 'Available';
                 const badgeColor = isAvailable ? 'background: #e6f4ea; color: #1e8e3e;' : 'background: #fff5f5; color: #e74c3c; border: 1px solid #ffe3e3;';
                 
-                // Konversi objek menu jadi string JSON supaya bisa dikirim via parameter onclick (Tombol Edit)
                 const menuJson = JSON.stringify(menu).replace(/"/g, '&quot;');
+
+                // Cek apakah ada gambar? Jika ada, tampilkan. Jika tidak, pakai placeholder
+                const imgHtml = menu.image
+                    ? `<img src="/storage/${menu.image}" style="width: 40px; height: 40px; border-radius: 8px; object-fit: cover; border: 1px solid #eee;">`
+                    : `<div style="width: 40px; height: 40px; border-radius: 8px; background: #eee; display: flex; align-items: center; justify-content: center; font-size: 16px;">☕</div>`;
 
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td style="padding: 15px 5px; border-bottom: 1px solid #f9f9f9;">
                         <div style="display: flex; align-items: center; gap: 15px;">
-                            <div style="width: 35px; height: 35px; border-radius: 50%; background: #eee;"></div>
+                            ${imgHtml}
                             <div>
                                 <strong style="display: block; color: #333;">${menu.menuName}</strong>
                                 <span style="font-size: 11px; color: #888;">${menu.description || '-'}</span>
@@ -242,7 +260,7 @@
                 tbody.appendChild(row);
             });
         } else {
-            tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #888; padding: 20px;">Tidak ada menu di kategori ini.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #888; padding: 20px;">Tidak ada menu.</td></tr>`;
         }
     }
 
@@ -254,30 +272,45 @@
         btnSave.disabled = true;
 
         const id = document.getElementById('input-id').value;
-        const data = {
-            menuName: document.getElementById('input-name').value,
-            description: document.getElementById('input-desc').value,
-            category: document.getElementById('input-category').value,
-            price: document.getElementById('input-price').value,
-            status: document.getElementById('input-status').value,
-        };
+        
+        // Gunakan FormData agar bisa mengirim file gambar
+        const formData = new FormData();
+        formData.append('menuName', document.getElementById('input-name').value);
+        formData.append('description', document.getElementById('input-desc').value);
+        formData.append('category', document.getElementById('input-category').value);
+        formData.append('price', document.getElementById('input-price').value);
+        formData.append('status', document.getElementById('input-status').value);
+        
+        const imageFile = document.getElementById('input-image').files[0];
+        if (imageFile) {
+            formData.append('image', imageFile);
+        }
 
-        const url = modalMode === 'add' ? `${API_URL_MENU}/owner/menus/add` : `${API_URL_MENU}/owner/menus/${id}`;
-        const method = modalMode === 'add' ? 'POST' : 'PUT';
+        let url = `${API_URL_MENU}/owner/menus/add`;
+        let method = 'POST';
+
+        if (modalMode === 'edit') {
+            url = `${API_URL_MENU}/owner/menus/${id}`;
+            formData.append('_method', 'PUT'); // Trik Laravel untuk update data via FormData
+        }
 
         try {
             const response = await fetch(url, {
                 method: method,
-                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json', 'Accept': 'application/json' },
-                body: JSON.stringify(data)
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Accept': 'application/json'
+                    // PERHATIAN: Jangan set Content-Type ke application/json di sini agar browser otomatis mengenali Multipart FormData
+                },
+                body: formData
             });
 
             if (response.ok) {
                 closeModal();
-                loadMenusData(); // Refresh Data Otomatis
+                loadMenusData();
             } else {
                 const errData = await response.json();
-                alert('GAGAL: ' + (errData.error || 'Pastikan kolom database sesuai.'));
+                alert('GAGAL: ' + (errData.error || 'Terjadi kesalahan.'));
             }
         } catch (error) {
             alert('Terjadi kesalahan koneksi.');

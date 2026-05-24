@@ -191,8 +191,8 @@
         const tbody = document.getElementById('stock-tbody');
         tbody.innerHTML = '';
 
-        const filteredStock = currentCategory === 'All Materials' 
-            ? allStock 
+        const filteredStock = currentCategory === 'All Materials'
+            ? allStock
             : allStock.filter(item => item.category === currentCategory);
 
         if (filteredStock.length > 0) {
