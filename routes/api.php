@@ -37,10 +37,18 @@ Route::post('/karyawan/pos/checkout', [KaryawanKasirController::class, 'checkout
 Route::get('/karyawan/reservations/data', [KaryawanReservasiController::class, 'index']);
 Route::post('/karyawan/reservations/{id}/status', [KaryawanReservasiController::class, 'updateStatus']);
 Route::get('/karyawan/online-orders', [KaryawanOnlineController::class, 'index']);
+
 Route::get('/admin/stock-report', [AdminStokController::class, 'index']);
 Route::get('/admin/sales-report', [AdminPenjualanController::class, 'index']);
 Route::get('/admin/transactions', [AdminTransactionController::class, 'index']);
 Route::get('/admin/dashboard-stats', [AdminDashboardController::class, 'index']);
+Route::get('/admin/dashboard/data', [AdminDashboardController::class, 'getAdminDashboardData']);
+Route::get('/admin/laporan-penjualan/data', [AdminPenjualanController::class, 'getLaporanPenjualan']);
+Route::get('/admin/data-transaksi/data', [AdminDashboardController::class, 'getDataTransaksi']);
+Route::put('/admin/data-transaksi/{id}', [AdminDashboardController::class, 'updateStatusTransaksi']);
+Route::delete('/admin/data-transaksi/{id}', [AdminDashboardController::class, 'deleteTransaksi']);
+Route::get('/admin/laporan-stok/data', [AdminDashboardController::class, 'getLaporanStokData']);
+
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 Route::get('/menus', [MenuController::class, 'index']);
