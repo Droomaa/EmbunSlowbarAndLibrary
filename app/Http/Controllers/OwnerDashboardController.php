@@ -191,27 +191,55 @@ class OwnerDashboardController extends Controller
    // 2. Tambah Menu Baru (Dengan Gambar)
     public function storeMenu(Request $request)
     {
+        // Gunakan transaksi database agar aman (jika gagal satu, gagal semua)
+        DB::beginTransaction();
+        
         try {
             $imagePath = null;
-            // Cek apakah ada file gambar yang diupload
+            // 1. Cek apakah ada file gambar yang diupload
             if ($request->hasFile('image')) {
                 // Simpan gambar ke folder storage/app/public/menus
                 $imagePath = $request->file('image')->store('menus', 'public');
             }
 
-            DB::table('menus')->insert([
+            // 2. Simpan Data Menu dan ambil ID-nya (PENTING: pakai insertGetId)
+            $menuId = DB::table('menus')->insertGetId([
                 'menuName' => $request->input('menuName'),
                 'category' => $request->input('category'),
                 'price' => $request->input('price'),
                 'status' => $request->input('status', 'Available'),
                 'description' => $request->input('description', ''),
-                'image' => $imagePath, // Simpan path gambar ke database
+                'image' => $imagePath, // Path gambar tetap tersimpan aman
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
-            return response()->json(['message' => 'Menu berhasil ditambahkan!'], 201);
+
+            // 3. Simpan Data Resep (Bahan Baku) ke tabel menu_ingredients
+            if ($request->has('ingredients')) {
+                // Ubah string JSON dari frontend kembali menjadi array
+                $ingredients = json_decode($request->input('ingredients'), true);
+                
+                if (is_array($ingredients) && count($ingredients) > 0) {
+                    foreach ($ingredients as $ing) {
+                        DB::table('menu_ingredients')->insert([
+                            'menu_id' => $menuId,
+                            'inventory_id' => $ing['inventory_id'],
+                            'quantity_needed' => $ing['quantity_needed'],
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ]);
+                    }
+                }
+            }
+
+            // 4. Kunci dan simpan semua perubahan ke database
+            DB::commit();
+            return response()->json(['message' => 'Menu dan resep berhasil ditambahkan!'], 201);
+            
         } catch (\Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 500);
+            // Batalkan semua penyimpanan jika terjadi error di tengah jalan
+            DB::rollBack();
+            return response()->json(['error' => 'Gagal menyimpan data: ' . $e->getMessage()], 500);
         }
     }
 

@@ -144,9 +144,16 @@
                 const name = menu.menuName || menu.name || 'Menu Baru';
                 const price = parseFloat(menu.price || menu.harga || 0);
 
+                // LOGIKA GAMBAR BARU: Jika ada gambar, tampilkan fotonya. Jika tidak, pakai emoji.
+                const imageContent = menu.image
+                    ? `<img src="/storage/${menu.image}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;">` 
+                    : `☕`;
+
                 list.innerHTML += `
                     <div class="menu-item">
-                        <div class="menu-img">☕</div>
+                        <div class="menu-img" style="${menu.image ? 'background: transparent; padding: 0;' : ''}">
+                            ${imageContent}
+                        </div>
                         <div class="menu-info">
                             <p class="menu-name">${name}</p>
                             <p class="menu-price">${formatRupiah(price)}</p>
