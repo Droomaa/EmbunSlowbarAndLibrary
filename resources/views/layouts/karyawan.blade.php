@@ -79,30 +79,33 @@
     </div>
 
     <script>
-        // Gunakan var agar tidak crash dengan halaman lain
         if (typeof API_URL === 'undefined') {
             var API_URL = 'http://127.0.0.1:8000/api';
         }
 
-        // Script Global Search (Filter Tabel Frontend)
+        // Script Global Search (Mendukung Tabel & Div Card)
         document.addEventListener('DOMContentLoaded', () => {
             const searchInput = document.getElementById('global-search-input');
             
             if(searchInput) {
                 searchInput.addEventListener('keyup', function() {
                     const filter = searchInput.value.toLowerCase();
+                    
+                    // 1. CARI DI DALAM TABEL (<tbody> > <tr>)
                     const tableBodies = document.getElementsByTagName('tbody');
-
                     for (let t = 0; t < tableBodies.length; t++) {
                         const rows = tableBodies[t].getElementsByTagName('tr');
                         for (let i = 0; i < rows.length; i++) {
                             const rowText = rows[i].innerText.toLowerCase();
-                            if (rowText.includes(filter)) {
-                                rows[i].style.display = '';
-                            } else {
-                                rows[i].style.display = 'none';
-                            }
+                            rows[i].style.display = rowText.includes(filter) ? '' : 'none';
                         }
+                    }
+
+                    // 2. CARI DI DALAM DIV CARD (Elemen dengan class 'searchable-item')
+                    const listItems = document.querySelectorAll('.searchable-item');
+                    for (let i = 0; i < listItems.length; i++) {
+                        const itemText = listItems[i].innerText.toLowerCase();
+                        listItems[i].style.display = itemText.includes(filter) ? '' : 'none';
                     }
                 });
             }

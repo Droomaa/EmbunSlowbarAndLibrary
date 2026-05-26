@@ -7,6 +7,8 @@ use App\Http\Controllers\KaryawanOnlineController;
 use App\Http\Controllers\OwnerDashboardController;
 use App\Http\Controllers\KaryawanReservasiController;
 use App\Http\Controllers\KaryawanKasirController;
+use App\Http\Controllers\KaryawanDashboardController;
+
 use App\Http\Controllers\AdminDashboardController;
 use App\Http\Controllers\AdminStokController;
 use App\Http\Controllers\AdminPenjualanController;
@@ -37,6 +39,7 @@ Route::post('/karyawan/pos/checkout', [KaryawanKasirController::class, 'checkout
 Route::get('/karyawan/reservations/data', [KaryawanReservasiController::class, 'index']);
 Route::post('/karyawan/reservations/{id}/status', [KaryawanReservasiController::class, 'updateStatus']);
 Route::get('/karyawan/online-orders', [KaryawanOnlineController::class, 'index']);
+Route::get('/karyawan/dashboard/data', [KaryawanDashboardController::class, 'getDashboardData']);
 
 Route::get('/admin/stock-report', [AdminStokController::class, 'index']);
 Route::get('/admin/sales-report', [AdminPenjualanController::class, 'index']);
