@@ -4,17 +4,25 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
+use App\Models\Reservation;
 
 class KaryawanDashboardController extends Controller
 {
-    public function getDashboardData()
+    public function getDashboardData(Request $request)
     {
+        $pendingCount = 0;
+        $pendingOrders = [];
+        $lowStockCount = 0;
+        $reservationsCount = 0;
+        $todayReservations = [];
+
+        // A. BLOK PESANAN (ORDERS)
         try {
-            // 1. Hitung Pesanan Pending & Ambil 5 Teratas
             $pendingCount = DB::table('orders')->where('status', 'Pending')->count();
             $pendingOrders = DB::table('orders')
                 ->where('status', 'Pending')
-                ->orderBy('created_at', 'asc') // Yang paling lama menunggu diutamakan
+                ->orderBy('created_at', 'asc')
                 ->limit(5)
                 ->get();
 
@@ -26,45 +34,52 @@ class KaryawanDashboardController extends Controller
                     ->implode(', ');
                 $order->items_text = $items ?: 'Item tidak diketahui';
             }
+        } catch (\Exception $e) { }
 
-            // 2. Hitung Stok Menipis (Misal batas kritis adalah <= 10)
+        // B. BLOK INVENTARIS (STOK)
+        try {
             $lowStockCount = DB::table('inventories')->where('quantity', '<=', 10)->count();
+        } catch (\Exception $e) { }
 
-            // 3. Reservasi Hari Ini (Aman dari error jika tabel belum eksis)
-            $reservationsCount = 0;
-            $todayReservations = [];
-            try {
-                $reservationsCount = DB::table('reservations')
-                    ->whereDate('reservation_date', now()->toDateString())
-                    ->count();
-                
-                $todayReservations = DB::table('reservations')
-                    ->whereDate('reservation_date', now()->toDateString())
-                    ->where('status', 'Pending')
-                    ->orderBy('reservation_time', 'asc')
-                    ->limit(3)
-                    ->get();
-            } catch (\Exception $e) {
-                // Abaikan jika tabel reservations belum ada di database
-            }
+        // C. BLOK RESERVASI
+        try {
+            $today = Carbon::now('Asia/Jakarta')->toDateString();
+            
+            $reservationsCount = Reservation::whereDate('reservation_date', $today)->count();
+            
+            $todayReservations = Reservation::whereDate('reservation_date', $today)
+                ->orderBy('reservation_date', 'asc')
+                ->limit(3)
+                ->get();
+        } catch (\Exception $e) { }
 
-            return response()->json([
-                'user' => [
-                    'name' => 'Budi Santoso', // Nanti bisa diganti Auth::user()->name
-                    'role' => 'KITCHEN MANAGER',
-                    'initial' => 'BS'
-                ],
-                'metrics' => [
-                    'pending_orders' => $pendingCount,
-                    'low_stock' => $lowStockCount,
-                    'today_reservations' => $reservationsCount
-                ],
-                'online_orders' => $pendingOrders,
-                'reservations' => $todayReservations
-            ], 200);
-
-        } catch (\Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 500);
+        // D. BLOK DATA USER LOGIN (POIN KE-6)
+        // Mengambil data user berdasarkan Token Sanctum yang dikirim dari Frontend
+        $user = auth('sanctum')->user(); 
+        
+        $userName = $user ? $user->name : 'Karyawan Embun';
+        $userRole = $user ? strtoupper($user->role) : 'KITCHEN TEAM';
+        
+        // Logika cerdas pembuat Inisial (contoh: "Budi Santoso" -> "BS")
+        $words = explode(' ', $userName);
+        $initial = '';
+        foreach (array_slice($words, 0, 2) as $w) {
+            $initial .= strtoupper($w[0]);
         }
+
+        return response()->json([
+            'user' => [
+                'name' => $userName, 
+                'role' => $userRole,
+                'initial' => $initial
+            ],
+            'metrics' => [
+                'pending_orders' => $pendingCount,
+                'low_stock' => $lowStockCount,
+                'today_reservations' => $reservationsCount
+            ],
+            'online_orders' => $pendingOrders,
+            'reservations' => $todayReservations
+        ], 200);
     }
 }

@@ -78,21 +78,19 @@
             const result = await response.json();
             
             if (response.ok) {
-                // UPDATE NAMA & KATA SAMBUTAN (Poin 6)
+                // UPDATE NAMA & METRIK
                 document.getElementById('greet-name').innerText = `Semangat Pagi, ${result.user.name}!`;
                 document.getElementById('greet-desc').innerText = `Hari ini ada ${result.metrics.today_reservations} reservasi terdaftar dan ${result.metrics.low_stock} stok bahan yang hampir habis. Mari berikan pelayanan terbaik untuk pelanggan Embun Cafe.`;
                 
-                // Update Topbar Layout Profile (Jika ID nya tersedia di layout)
                 if(document.getElementById('layout-user-name')) document.getElementById('layout-user-name').innerText = result.user.name;
                 if(document.getElementById('layout-user-role')) document.getElementById('layout-user-role').innerText = result.user.role;
                 if(document.getElementById('layout-user-avatar')) document.getElementById('layout-user-avatar').innerText = result.user.initial;
 
-                // UPDATE METRIK (Poin 1, 2, 3)
                 document.getElementById('val-incoming').innerText = result.metrics.pending_orders || 0;
                 document.getElementById('val-reservations').innerText = result.metrics.today_reservations || 0;
                 document.getElementById('val-lowstock').innerText = (result.metrics.low_stock < 10 ? '0' : '') + (result.metrics.low_stock || 0);
 
-                // UPDATE PESANAN ONLINE (Poin 4)
+                // UPDATE PESANAN ONLINE
                 const ordersContainer = document.getElementById('online-orders-container');
                 ordersContainer.innerHTML = '';
                 if (result.online_orders && result.online_orders.length > 0) {
@@ -117,22 +115,36 @@
                     ordersContainer.innerHTML = '<p style="text-align: center; font-size: 13px; color: #888; padding: 20px 0;">Tidak ada pesanan tertunda.</p>';
                 }
 
-                // UPDATE RESERVASI (Poin 5)
+                // UPDATE RESERVASI
                 const resContainer = document.getElementById('reservations-container');
                 resContainer.innerHTML = '';
                 if (result.reservations && result.reservations.length > 0) {
                     result.reservations.forEach(res => {
+                        // Ekstrak Jam dari DATETIME reservation_date
+                        let timeString = '18:00';
+                        if (res.reservation_date) {
+                            const dateObj = new Date(res.reservation_date);
+                            timeString = `${dateObj.getHours().toString().padStart(2, '0')}:${dateObj.getMinutes().toString().padStart(2, '0')}`;
+                        }
+
+                        // Cek status (Pending vs Confirmed) dari database
+                        const isPending = res.status.toLowerCase() === 'pending';
+                        
+                        const actionHtml = isPending
+                            ? `<button class="btn-primary" onclick="window.location.href='/karyawan/reservasi'" style="flex: 1; padding: 6px;">Verifikasi</button>`
+                            : `<div style="flex: 1; text-align: center; color: #1e8e3e; font-size: 12px; font-weight: bold; background: #e6f4ea; padding: 6px; border-radius: 6px;">✔️ Confirmed</div>`;
+
                         resContainer.innerHTML += `
-                            <div style="background: #f4f3ed; padding: 15px; border-radius: 8px; margin-bottom: 10px;">
+                            <div class="searchable-item" style="background: #f4f3ed; padding: 15px; border-radius: 8px; margin-bottom: 10px;">
                                 <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
                                     <div>
                                         <strong style="display: block;">${res.customer_name || 'Tamu'}</strong>
-                                        <span style="font-size: 11px; color: #666;">${res.pax || 2} Tamu • Hari ini, ${res.reservation_time || '18:00'}</span>
+                                        <span style="font-size: 11px; color: #666;">${res.pax || 2} Tamu • Hari ini, ${timeString} WIB</span>
                                     </div>
                                     <span style="background: #e2e8e4; font-size: 10px; padding: 2px 6px; border-radius: 4px; height: fit-content; color: #4c7c5f; font-weight: bold;">MEJA ${res.table_number || '?'}</span>
                                 </div>
                                 <div style="display: flex; gap: 5px;">
-                                    <button class="btn-primary" onclick="window.location.href='/karyawan/reservasi'" style="flex: 1; padding: 6px;">Verifikasi</button>
+                                    ${actionHtml}
                                 </div>
                             </div>
                         `;

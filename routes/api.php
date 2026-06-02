@@ -19,6 +19,9 @@ use App\Http\Controllers\ReservationController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\InventoryController;
 
+// ==========================================
+// RUTE OWNER
+// ==========================================
 Route::get('/owner/dashboard/data', [OwnerDashboardController::class, 'getOverview']);
 Route::get('/owner/reports/data', [OwnerDashboardController::class, 'getSalesReports']);
 Route::get('/owner/stock/data', [OwnerDashboardController::class, 'getStockReports']);
@@ -31,16 +34,30 @@ Route::delete('/owner/menus/{id}', [OwnerDashboardController::class, 'deleteMenu
 Route::get('/owner/transactions/data', [OwnerDashboardController::class, 'getTransactions']);
 Route::put('/owner/transactions/{id}/status', [OwnerDashboardController::class, 'updateTransactionStatus']);
 
+// ==========================================
+// RUTE KARYAWAN
+// ==========================================
+// KASIR & MENU
 Route::get('/karyawan/orders/offline', [KaryawanKasirController::class, 'getOfflineOrders']);
-Route::get('/karyawan/orders/online', [KaryawanKasirController::class, 'getOnlineOrders']);
-Route::post('/karyawan/orders/{id}/status', [KaryawanKasirController::class, 'updateOrderStatus']);
 Route::get('/karyawan/pos/menus', [KaryawanKasirController::class, 'getMenus']);
 Route::post('/karyawan/pos/checkout', [KaryawanKasirController::class, 'checkout']);
+
+// PESANAN ONLINE MASUK
+Route::get('/karyawan/online-orders', [KaryawanOnlineController::class, 'index']);
+Route::get('/karyawan/orders/online', [KaryawanOnlineController::class, 'getOnlineOrders']);
+Route::post('/karyawan/orders/{id}/status', [KaryawanOnlineController::class, 'updateOrderStatus']);
+
+// RESERVASI
 Route::get('/karyawan/reservations/data', [KaryawanReservasiController::class, 'index']);
 Route::post('/karyawan/reservations/{id}/status', [KaryawanReservasiController::class, 'updateStatus']);
-Route::get('/karyawan/online-orders', [KaryawanOnlineController::class, 'index']);
+
+// DASHBOARD KARYAWAN (Diarahkan ke KaryawanOnlineController yang memuat logika terbaru!)
 Route::get('/karyawan/dashboard/data', [KaryawanDashboardController::class, 'getDashboardData']);
 
+
+// ==========================================
+// RUTE ADMIN
+// ==========================================
 Route::get('/admin/stock-report', [AdminStokController::class, 'index']);
 Route::get('/admin/sales-report', [AdminPenjualanController::class, 'index']);
 Route::get('/admin/transactions', [AdminTransactionController::class, 'index']);
@@ -52,18 +69,34 @@ Route::put('/admin/data-transaksi/{id}', [AdminDashboardController::class, 'upda
 Route::delete('/admin/data-transaksi/{id}', [AdminDashboardController::class, 'deleteTransaksi']);
 Route::get('/admin/laporan-stok/data', [AdminDashboardController::class, 'getLaporanStokData']);
 
+// ==========================================
+// RUTE UMUM & AUTENTIKASI
+// ==========================================
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 Route::get('/menus', [MenuController::class, 'index']);
 Route::get('/addons', fn() => response()->json(\App\Models\AddOn::all()));
 Route::post('/orders', [OrderController::class, 'store']);
-Route::post('/reservations', [ReservationController::class, 'store']);
+Route::post('/reservations', [ReservationController::class, 'store']); // Rute Customer isi form
 
+// ==========================================
+// MIDDLEWARE AUTENTIKASI & ROLE
+// ==========================================
 Route::middleware('auth:sanctum')->group(function () {
     
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/me', fn(Request $request) => response()->json($request->user()));
 
+    // 🌟 KITA PINDAHKAN RUTE INVENTORY KE SINI! 🌟
+    // Sekarang, semua karyawan yang memiliki token login sah bisa mengelola stok
+    Route::get('/inventory', [InventoryController::class, 'index']);
+    Route::post('/inventory', [InventoryController::class, 'store']);
+    Route::patch('/inventory/{id}', [InventoryController::class, 'update']);
+    Route::delete('/inventory/{id}', [InventoryController::class, 'destroy']);
+
+    // ==========================================
+    // AREA KHUSUS ROLE TERTENTU
+    // ==========================================
     Route::middleware('role:Owner,Admin')->group(function () {
         Route::post('/menus', [MenuController::class, 'store']);
         Route::post('/menus/{id}', [MenuController::class, 'update']);
@@ -82,11 +115,6 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/orders', [OrderController::class, 'index']);
         Route::patch('/reservations/{id}/status', [ReservationController::class, 'updateStatus']);
         Route::patch('/orders/{id}/status', [OrderController::class, 'updateStatus']);
-
-        Route::get('/inventory', [InventoryController::class, 'index']);
-        Route::post('/inventory', [InventoryController::class, 'store']);
-        Route::patch('/inventory/{id}', [InventoryController::class, 'update']);
-        Route::delete('/inventory/{id}', [InventoryController::class, 'destroy']);
     });
 
     Route::middleware('role:Admin')->group(function () {

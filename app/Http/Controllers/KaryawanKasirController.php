@@ -10,12 +10,14 @@ use Illuminate\Support\Facades\DB;
 
 class KaryawanKasirController extends Controller
 {
+    // API: Ambil Semua Data Menu
     public function getMenus()
     {
         $menus = Menu::all();
         return response()->json(['data' => $menus], 200);
     }
 
+    // API: Proses Checkout (Kasir Offline & QR Menu)
     public function checkout(Request $request)
     {
         try {
@@ -37,10 +39,7 @@ class KaryawanKasirController extends Controller
             // --- DATA MEJA & PEMBAYARAN ---
             $order->table_number = $request->input('table_number');
             $order->order_type = $request->input('order_type', 'Dine In');
-            
-            // BARI INI SUDAH DIBUKA KUNCINYA (Tanda // dihapus) 👇
             $order->payment_method = $request->input('payment_method', 'Tunai');
-            
             $order->status = 'Pending';
             // ------------------------------------------------------
             
@@ -71,43 +70,37 @@ class KaryawanKasirController extends Controller
             return response()->json(['message' => 'Waduh, gagal menyimpan transaksi: ' . $e->getMessage()], 500);
         }
     }
+    
     // API: Ambil Pesanan Offline (Dine In & Takeaway)
     public function getOfflineOrders()
     {
-        $orders = DB::table('orders')
-                    ->whereIn('order_type', ['Dine In', 'Takeaway'])
-                    ->orderBy('created_at', 'desc')
-                    ->get();
-                    
-        return response()->json(['data' => $orders], 200);
-    }
-    // API: Ambil Pesanan Online (Delivery & Pickup)
-    public function getOnlineOrders()
-    {
-        $orders = DB::table('orders')
-                    // Filter khusus tipe Delivery atau Pickup
-                    ->whereIn('order_type', ['Delivery', 'Pickup', 'Pick Up'])
-                    ->orderBy('created_at', 'desc')
-                    ->get();
-                    
-        // Hitung total pesanan hari ini khusus online (buat angka hijau di kanan atas UI kamu)
-        $totalToday = DB::table('orders')
-                    ->whereIn('order_type', ['Delivery', 'Pickup', 'Pick Up'])
-                    ->whereDate('created_at', \Carbon\Carbon::today())
-                    ->count();
+        try {
+            // 1. Ambil data pesanan utama
+            $orders = DB::table('orders')
+                        ->whereIn('order_type', ['Dine In', 'Takeaway'])
+                        ->orderBy('created_at', 'desc')
+                        ->get();
+            
+            // 2. Ambil detail item untuk masing-masing pesanan
+            foreach ($orders as $order) {
+                // Pastikan order_id yang dipakai akurat
+                $orderId = $order->order_id ?? $order->id; 
 
-        return response()->json([
-            'data' => $orders,
-            'total_today' => $totalToday
-        ], 200);
-    }
+                $items = DB::table('order_items')
+                    ->join('menus', 'order_items.menu_id', '=', 'menus.id')
+                    ->where('order_items.order_id', $orderId)
+                    // HANYA MENGAMBIL menuName agar tidak terjadi error SQL "Column not found"
+                    ->select('menus.menuName', 'order_items.quantity', 'order_items.subtotal')
+                    ->get();
+                
+                $order->items = $items;
+            }
+                        
+            return response()->json(['data' => $orders], 200);
 
-    // API: Update Status Pesanan (Bisa dari semua page Karyawan)
-    public function updateOrderStatus(Request $request, $id)
-    {
-        DB::table('orders')->where('order_id', $id)->update([
-            'status' => $request->input('status')
-        ]);
-        return response()->json(['message' => 'Status berhasil diubah!']);
+        } catch (\Exception $e) {
+            // Jika masih error, kita biarkan pesannya terkirim agar ketahuan salahnya di mana
+            return response()->json(['error' => 'Gagal mengambil data: ' . $e->getMessage()], 500);
+        }
     }
 }

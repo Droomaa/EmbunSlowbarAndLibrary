@@ -10,7 +10,6 @@ class KaryawanReservasiController extends Controller
 {
     public function index(): JsonResponse
     {
-        // PERBAIKAN 1: Hapus order by reservation_time karena tanggal & jam sudah gabung di reservation_date
         $reservations = Reservation::orderBy('reservation_date', 'asc')->get();
 
         $pending = $reservations->filter(fn($res) => strtolower($res->status) === 'pending')->count();
@@ -33,7 +32,6 @@ class KaryawanReservasiController extends Controller
 
     public function updateStatus(Request $request, $id): JsonResponse
     {
-        // PERBAIKAN 2: Pakai 'where' mencocokkan dengan nama kolom 'reservation_id' di databasemu
         $reservation = Reservation::where('reservation_id', $id)->first();
 
         if (!$reservation) {
@@ -49,8 +47,6 @@ class KaryawanReservasiController extends Controller
     // API PUBLIK: Menyimpan data reservasi dari Form Customer
     public function storeCustomerReservation(Request $request)
     {
-        // Karena di database kamu kolom reservation_date bertipe DATETIME,
-        // kita gabungkan input tanggal dan jam dari customer jadi satu format yang pas.
         $datetime = $request->input('tanggal') . ' ' . $request->input('jam') . ':00';
 
         \App\Models\Reservation::insert([
@@ -59,12 +55,11 @@ class KaryawanReservasiController extends Controller
             'reservation_date' => $datetime,
             'pax' => $request->input('pax'),
             'notes' => $request->input('notes', 'Tidak ada catatan'),
-            'status' => 'Pending', // Default status selalu Pending
+            'status' => 'Pending',
             'created_at' => now(),
             'updated_at' => now(),
         ]);
 
-        // Kembalikan ke halaman form dengan pesan sukses
         return back()->with('success', '🎉 Hore! Permintaan reservasi kamu berhasil dikirim. Silakan tunggu konfirmasi dari tim kami ya!');
     }
 }

@@ -160,11 +160,11 @@
     
     let allMenus = [];
     let modalMode = 'add'; 
-    let ingredientsArray = []; // Array Penampung Resep
+    let ingredientsArray = []; 
 
     document.addEventListener('DOMContentLoaded', () => {
         loadMenusData();
-        loadInventoryData(); // Tarik data gudang buat dropdown resep
+        loadInventoryData();
         document.getElementById('filter-category').addEventListener('change', renderTable);
     });
 
@@ -172,14 +172,12 @@
         return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(angka);
     };
 
-    // 1. Tarik Data Inventory Untuk Dropdown Resep
     async function loadInventoryData() {
         try {
             const res = await fetch(`${API_URL_MENU}/owner/stock/data`, {
                 headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' }
             });
             const result = await res.json();
-            
             if(res.ok && result.data) {
                 const select = document.getElementById('select-inventory');
                 select.innerHTML = '<option value="">-- Pilih Bahan Baku --</option>';
@@ -188,12 +186,10 @@
                 });
             }
         } catch (e) {
-            console.error("Gagal load inventory", e);
             document.getElementById('select-inventory').innerHTML = '<option value="">Gagal memuat gudang</option>';
         }
     }
 
-    // 2. Logika Tambah & Hapus Bahan (Resep) di Layar Modal
     window.addIngredientRow = function() {
         const invSelect = document.getElementById('select-inventory');
         const qtyInput = document.getElementById('input-qty-needed');
@@ -203,14 +199,13 @@
             return;
         }
 
-        // Masukkan ke dalam array sementara
         ingredientsArray.push({
             inventory_id: invSelect.value,
             inventory_name: invSelect.options[invSelect.selectedIndex].text,
             quantity_needed: qtyInput.value
         });
 
-        qtyInput.value = ''; // Kosongkan input angka setelah ditambah
+        qtyInput.value = '';
         renderIngredients();
     };
 
@@ -234,8 +229,7 @@
         `).join('');
     }
 
-    // 3. Logika Buka Tutup Modal Utama
-    window.openModal = function(mode, menuData = null) {
+    window.openModal = function(mode, menuId = null) {
         modalMode = mode;
         const modal = document.getElementById('modal-menu');
         const form = document.getElementById('menu-form');
@@ -245,23 +239,28 @@
             title.innerText = 'Add New Menu';
             form.reset();
             document.getElementById('input-id').value = '';
-            
-            // Kosongkan resep saat form tambah menu baru dibuka
             ingredientsArray = [];
             renderIngredients();
 
-        } else if (mode === 'edit' && menuData) {
+        } else if (mode === 'edit' && menuId !== null) {
             title.innerText = 'Edit Menu';
-            document.getElementById('input-id').value = menuData.id;
+            
+            // Cari data menu menggunakan ID
+            const menuData = allMenus.find(m => m.id == menuId || m.menu_id == menuId);
+
+            document.getElementById('input-id').value = menuData.id || menuData.menu_id;
             document.getElementById('input-name').value = menuData.menuName;
             document.getElementById('input-desc').value = menuData.description || '';
             document.getElementById('input-category').value = menuData.category || 'Coffee';
             document.getElementById('input-price').value = menuData.price;
             document.getElementById('input-status').value = menuData.status || 'Available';
             
-            // Note: Karena belum ada API khusus untuk narik resep saat edit,
-            // kita kosongkan dulu. Owner harus input ulang bahan jika ingin update resepnya.
-            ingredientsArray = [];
+            // Masukkan data resep ke dalam modal
+            if (menuData.ingredients && Array.isArray(menuData.ingredients)) {
+                ingredientsArray = JSON.parse(JSON.stringify(menuData.ingredients));
+            } else {
+                ingredientsArray = [];
+            }
             renderIngredients();
         }
         
@@ -272,21 +271,18 @@
         document.getElementById('modal-menu').style.display = 'none';
     }
 
-    // 4. Load Data Tabel dan Metrik (Bottom Cards)
     async function loadMenusData() {
         try {
-            const response = await fetch(`${API_URL_MENU}/owner/menus/data`, {
+            const response = await fetch(`${API_URL_MENU}/menus`, {
                 headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' }
             });
             const result = await response.json();
 
             if (response.ok) {
-                allMenus = result.menus || [];
+                allMenus = result.menus || result.data || [];
                 
-                document.getElementById('val-total-catalog').innerText = result.metrics.total_catalog;
-                document.getElementById('val-stock-alerts').innerText = result.metrics.stock_alerts;
-                document.getElementById('val-popular-name').innerText = result.metrics.popular_name;
-                document.getElementById('val-popular-sold').innerText = result.metrics.popular_sold;
+                document.getElementById('val-total-catalog').innerText = result.metrics ? result.metrics.total_catalog : allMenus.length;
+                document.getElementById('val-stock-alerts').innerText = result.metrics ? result.metrics.stock_alerts : 0;
 
                 renderTable();
             }
@@ -307,11 +303,14 @@
                 const isAvailable = menu.status === 'Available';
                 const badgeColor = isAvailable ? 'background: #e6f4ea; color: #1e8e3e;' : 'background: #fff5f5; color: #e74c3c; border: 1px solid #ffe3e3;';
                 
-                const menuJson = JSON.stringify(menu).replace(/"/g, '&quot;');
-
-                const imgHtml = menu.image 
-                    ? `<img src="/storage/${menu.image}" style="width: 40px; height: 40px; border-radius: 8px; object-fit: cover; border: 1px solid #eee;">`
+                // Cek path gambar yang aman
+                const imageSrc = menu.image_url ? menu.image_url : (menu.image ? `/storage/${menu.image}` : null);
+                
+                const imgHtml = imageSrc 
+                    ? `<img src="${imageSrc}" style="width: 40px; height: 40px; border-radius: 8px; object-fit: cover; border: 1px solid #eee;">`
                     : `<div style="width: 40px; height: 40px; border-radius: 8px; background: #eee; display: flex; align-items: center; justify-content: center; font-size: 16px;">☕</div>`;
+
+                const menuId = menu.id || menu.menu_id;
 
                 const row = document.createElement('tr');
                 row.innerHTML = `
@@ -330,8 +329,8 @@
                         <span style="padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: bold; ${badgeColor}">${menu.status || 'Available'}</span>
                     </td>
                     <td style="padding: 15px 5px; border-bottom: 1px solid #f9f9f9; text-align: center;">
-                        <button class="action-icon" onclick="openModal('edit', ${menuJson})" title="Edit Menu">✏️</button>
-                        <button class="action-icon" onclick="deleteMenu(${menu.id})" title="Hapus Menu">🗑️</button>
+                        <button class="action-icon" onclick="openModal('edit', ${menuId})" title="Edit Menu">✏️</button>
+                        <button class="action-icon" onclick="deleteMenu(${menuId})" title="Hapus Menu">🗑️</button>
                     </td>
                 `;
                 tbody.appendChild(row);
@@ -341,7 +340,6 @@
         }
     }
 
-    // 5. Fungsi Tambah / Edit Submit
     window.submitMenu = async function(e) {
         e.preventDefault();
         const btnSave = document.getElementById('btn-save');
@@ -349,8 +347,6 @@
         btnSave.disabled = true;
 
         const id = document.getElementById('input-id').value;
-        
-        // Gunakan FormData agar bisa mengirim file gambar
         const formData = new FormData();
         formData.append('menuName', document.getElementById('input-name').value);
         formData.append('description', document.getElementById('input-desc').value);
@@ -358,7 +354,6 @@
         formData.append('price', document.getElementById('input-price').value);
         formData.append('status', document.getElementById('input-status').value);
         
-        // 🔥 Kirim data resep dalam bentuk JSON String
         formData.append('ingredients', JSON.stringify(ingredientsArray));
         
         const imageFile = document.getElementById('input-image').files[0];
@@ -399,7 +394,6 @@
         }
     }   
 
-    // Fungsi Hapus Menu
     window.deleteMenu = async function(id) {
         if(!confirm('Yakin ingin menghapus menu ini dari katalog?')) return;
 

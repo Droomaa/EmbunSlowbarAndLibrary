@@ -7,6 +7,7 @@ use App\Models\Order;
 use Illuminate\Support\Facades\DB;
 use App\Models\Inventory;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Str; // <-- Kunci kecerdasan filter kita!
 
 class AdminDashboardController extends Controller
 {
@@ -32,6 +33,7 @@ class AdminDashboardController extends Controller
             ]
         ], 200);
     }
+    
     public function getAdminDashboardData()
     {
         try {
@@ -95,6 +97,7 @@ class AdminDashboardController extends Controller
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
+    
     // 1. Tarik Data Transaksi (Dengan Filter & Metrik All-Time)
     public function getDataTransaksi(Request $request)
     {
@@ -128,7 +131,7 @@ class AdminDashboardController extends Controller
             if ($statusFilter && $statusFilter !== 'all') {
                 $query->where('status', $statusFilter);
             }
-            // 👈 2. Logika pencarian cerdas (Mencari ID atau Nama)
+            // Logika pencarian cerdas (Mencari ID atau Nama)
             if ($search) {
                 $query->where(function($q) use ($search) {
                     $q->where('order_id', 'LIKE', "%{$search}%")
@@ -207,77 +210,87 @@ class AdminDashboardController extends Controller
         }
     }
 
+    // =========================================================================
+    // 4. API LAPORAN STOK (VERSI WILDCARD JSON & TABLE_DATA FIX)
+    // =========================================================================
     public function getLaporanStokData(Request $request)
     {
         try {
-            $kategori = $request->input('kategori', 'Semua');
-            $status = $request->input('status', 'all');
+            $kategori = trim(strtolower($request->query('kategori', 'all')));
+            $status = trim(strtolower($request->query('status', 'all')));
+            $search = trim(strtolower($request->query('search', ''))); 
 
-            // 1. Query Dasar ke Tabel Inventori
-            $query = DB::table('inventories');
+            $items = DB::table('inventories')->get();
 
-            // Jika Kategori bukan "Semua", filter berdasarkan kategori
-            if ($kategori !== 'Semua') {
-                $query->where('category', $kategori); 
+            // Ubah menjadi Collection
+            $filteredItems = collect($items);
+
+            // 1. FILTER PENCARIAN (Search Bar Atas)
+            if ($search !== '') {
+                $filteredItems = $filteredItems->filter(function($item) use ($search) {
+                    // Cerdas: Jadikan seluruh data baris MySQL sebagai string, lalu cari katanya
+                    return Str::contains(strtolower(json_encode($item)), $search);
+                });
             }
 
-            $inventories = $query->orderBy('item_name', 'asc')->get();
+            // 2. FILTER KATEGORI (Mendeteksi dari seluruh properti baris MySQL)
+            if ($kategori !== 'all' && $kategori !== 'semua' && $kategori !== '') {
+                $filteredItems = $filteredItems->filter(function($item) use ($kategori) {
+                    $itemString = strtolower(json_encode($item));
+                    
+                    if (Str::contains($kategori, 'kopi')) {
+                        return Str::contains($itemString, ['kopi', 'espresso', 'bean', 'robusta', 'arabica']);
+                    }
+                    if (Str::contains($kategori, ['susu', 'krim'])) {
+                        return Str::contains($itemString, ['susu', 'milk', 'krim', 'cream', 'oat', 'dairy']);
+                    }
 
-            // 2. Siapkan Wadah untuk Metrik (Kartu di Atas)
-            $habis = 0;
-            $hampirHabis = 0;
-            $aman = 0;
-            $totalItem = $inventories->count();
+                    return Str::contains($itemString, $kategori);
+                });
+            }
 
-            $tableData = [];
+            // 3. FILTER STATUS (Kalkulasi Kritis)
+            if ($status !== 'all' && $status !== 'semua status' && $status !== '') {
+                $filteredItems = $filteredItems->filter(function($item) use ($status) {
+                    // Mencari secara dinamis nama kolom jumlah dan batas minimum
+                    $qty = (float) ($item->quantity ?? $item->stock_quantity ?? $item->stok ?? 0);
+                    $min = (float) ($item->minimum_stock ?? $item->batas_minimum ?? $item->min_stock ?? 10);
+                    
+                    $itemStatus = 'aman';
+                    if ($qty <= 0) $itemStatus = 'habis';
+                    else if ($qty <= $min) $itemStatus = 'menipis';
 
-            // 3. Looping untuk menentukan status dan menyusun data tabel
-            foreach ($inventories as $item) {
-                $qty = (float) $item->quantity;
-                // Asumsikan batas minimum 10 jika kolom minimum_stock tidak ada
-                $minStock = isset($item->minimum_stock) ? (float) $item->minimum_stock : 10;
+                    if (Str::contains($status, ['habis', 'critical'])) return $itemStatus === 'habis';
+                    if (Str::contains($status, ['menipis', 'low'])) return $itemStatus === 'menipis';
+                    if (Str::contains($status, ['aman', 'safe'])) return $itemStatus === 'aman';
+                    
+                    return true; 
+                });
+            }
 
-                // Tentukan Status Barang
-                if ($qty <= 0) {
-                    $itemStatus = 'Habis';
-                    $habis++;
-                } elseif ($qty <= ($minStock * 5)) { // Contoh: Jika min 10, maka < 50 itu hampir habis
-                    $itemStatus = 'Hampir Habis';
-                    $hampirHabis++;
-                } else {
-                    $itemStatus = 'Aman';
-                    $aman++;
-                }
-
-                // Jika filter status aktif, buang barang yang tidak cocok dari tabel
-                if ($status !== 'all' && $status !== $itemStatus) {
-                    continue; 
-                }
-
-                $tableData[] = [
-                    'id' => $item->id,
-                    'item_name' => $item->item_name,
-                    'category' => isset($item->category) ? $item->category : 'Bahan/Material',
-                    'quantity' => $qty,
-                    'unit' => isset($item->unit) ? $item->unit : 'gram',
-                    'minimum_stock' => $minStock,
-                    'status' => $itemStatus,
-                    'updated_at' => \Carbon\Carbon::parse($item->updated_at ?? now())->translatedFormat('d M, H:i')
-                ];
+            // Hitung Metrik dari data Asli
+            $habis = 0; $menipis = 0; $aman = 0;
+            foreach ($items as $inv) {
+                $q = (float) ($inv->quantity ?? $inv->stock_quantity ?? $inv->stok ?? 0);
+                $m = (float) ($inv->minimum_stock ?? $inv->batas_minimum ?? $inv->min_stock ?? 10);
+                if ($q <= 0) $habis++;
+                else if ($q <= $m) $menipis++;
+                else $aman++;
             }
 
             return response()->json([
+                // 🌟 FIX UTAMA: MENGGUNAKAN KEY 'table_data' AGAR TERBACA OLEH FRONTEND
+                'table_data' => $filteredItems->values()->all(),
                 'metrics' => [
-                    'habis' => $habis,
-                    'hampir_habis' => $hampirHabis,
-                    'aman' => $aman,
-                    'total' => $totalItem
-                ],
-                'table_data' => $tableData
+                    'habis' => $habis, 
+                    'hampir_habis' => $menipis, 
+                    'aman' => $aman, 
+                    'total' => $items->count()
+                ]
             ], 200);
 
-        } catch (\Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 500);
+        } catch (\Throwable $e) { 
+            return response()->json(['error' => 'Gagal memproses filter: ' . $e->getMessage()], 500);
         }
     }
 }
