@@ -30,7 +30,7 @@
             <div class="card">
                 <p style="color: #888; font-size: 11px; margin: 0; text-transform: uppercase;">👥 Total Pelanggan</p>
                 <h2 style="margin: 10px 0 5px 0;" id="val-sales-customers">0 Orang</h2>
-                <p style="color: white; font-size: 11px; margin: 0;">-</p> 
+                <p style="color: white; font-size: 11px; margin: 0;">-</p>
             </div>
             <div class="card">
                 <p class="text-red" style="font-size: 11px; margin: 0; text-transform: uppercase;">❌ Dibatalkan</p>
@@ -171,7 +171,7 @@
                         // Badge status
                         const statusBadge = trx.status === 'Completed'
                             ? '<span style="background: #e6f4ea; color: #1e8e3e; padding: 4px 10px; border-radius: 20px; font-size: 10px; font-weight: bold;">SELESAI</span>'
-                            : (trx.status === 'Reject' 
+                            : (trx.status === 'Reject'
                                 ? '<span style="background: #fff5f5; color: #dc3545; padding: 4px 10px; border-radius: 20px; font-size: 10px; font-weight: bold;">BATAL</span>'
                                 : '<span style="background: #fff9e6; color: #d39e00; padding: 4px 10px; border-radius: 20px; font-size: 10px; font-weight: bold;">PENDING</span>');
 
@@ -241,7 +241,7 @@
         const link = document.createElement("a");
         link.setAttribute("href", encodedUri);
         link.setAttribute("download", "Laporan_Penjualan_Embun_Cafe.csv");
-        document.body.appendChild(link); 
+        document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
     };

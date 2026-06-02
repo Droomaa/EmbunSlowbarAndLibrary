@@ -55,7 +55,7 @@ class KaryawanDashboardController extends Controller
 
         // D. BLOK DATA USER LOGIN (POIN KE-6)
         // Mengambil data user berdasarkan Token Sanctum yang dikirim dari Frontend
-        $user = auth('sanctum')->user(); 
+        $user = auth('sanctum')->user();
         
         $userName = $user ? $user->name : 'Karyawan Embun';
         $userRole = $user ? strtoupper($user->role) : 'KITCHEN TEAM';
@@ -69,7 +69,7 @@ class KaryawanDashboardController extends Controller
 
         return response()->json([
             'user' => [
-                'name' => $userName, 
+                'name' => $userName,
                 'role' => $userRole,
                 'initial' => $initial
             ],

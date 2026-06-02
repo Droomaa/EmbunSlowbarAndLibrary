@@ -84,7 +84,7 @@ class KaryawanKasirController extends Controller
             // 2. Ambil detail item untuk masing-masing pesanan
             foreach ($orders as $order) {
                 // Pastikan order_id yang dipakai akurat
-                $orderId = $order->order_id ?? $order->id; 
+                $orderId = $order->order_id ?? $order->id;
 
                 $items = DB::table('order_items')
                     ->join('menus', 'order_items.menu_id', '=', 'menus.id')

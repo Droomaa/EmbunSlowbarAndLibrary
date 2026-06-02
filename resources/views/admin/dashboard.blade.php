@@ -141,7 +141,7 @@
 
     document.addEventListener('DOMContentLoaded', async () => {
         // ✅ API_URL dan Token DIPINDAHKAN KE DALAM SINI AGAR TIDAK CRASH DENGAN LAYOUT
-        const API_URL = 'http://127.0.0.1:8000/api'; 
+        const API_URL = 'http://127.0.0.1:8000/api';
         const token = localStorage.getItem('embun_token');
 
         try {
@@ -243,7 +243,7 @@
         if (data && data.length > 0) {
             tableContainer.style.display = 'table';
             emptyState.style.display = 'none';
-            tbody.innerHTML = ''; 
+            tbody.innerHTML = '';
             
             data.forEach(trx => {
                 const dateObj = new Date(trx.created_at);
@@ -254,7 +254,7 @@
                 row.innerHTML = `
                     <td style="padding: 10px 5px; color: #4c7c5f; font-weight: bold;">#EMB-${trx.order_id}</td>
                     <td style="padding: 10px 5px;">
-                        <span style="background: #eee; padding: 4px; border-radius: 50%; font-size: 10px; margin-right: 5px;">${(trx.customer_name || 'W').charAt(0).toUpperCase()}</span> 
+                        <span style="background: #eee; padding: 4px; border-radius: 50%; font-size: 10px; margin-right: 5px;">${(trx.customer_name || 'W').charAt(0).toUpperCase()}</span>
                         ${trx.customer_name || 'Walk-in'}
                     </td>
                     <td style="padding: 10px 5px; color: #888; font-size: 13px;">${timeString} WIB</td>
@@ -281,12 +281,12 @@
                 const isDanger = qty <= 100;
                 const barColor = isDanger ? '#dc3545' : '#d39e00';
                 const textColor = isDanger ? '#dc3545' : '#856404';
-                const barWidth = Math.max((qty / 500) * 100, 5); 
+                const barWidth = Math.max((qty / 500) * 100, 5);
                 
                 stockList.innerHTML += `
                     <div style="margin-bottom: 15px;">
                         <div style="display: flex; justify-content: space-between; font-size: 13px; font-weight: bold; margin-bottom: 5px;">
-                            <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 130px;" title="${item.item_name}">📦 ${item.item_name}</span> 
+                            <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 130px;" title="${item.item_name}">📦 ${item.item_name}</span>
                             <span style="color: ${textColor};">${qty} ${item.unit}</span>
                         </div>
                         <div style="width: 100%; background: #eee; height: 6px; border-radius: 3px;">

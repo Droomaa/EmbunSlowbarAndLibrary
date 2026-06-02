@@ -117,9 +117,9 @@
             try {
                 const res = await fetch(`${API_URL}/karyawan/pos/menus`, { headers: { 'Accept': 'application/json' } });
                 const result = await res.json();
-                if(res.ok) { 
-                    menus = result.data; 
-                    renderMenus(); 
+                if(res.ok) {
+                    menus = result.data;
+                    renderMenus();
                 }
             } catch (error) {
                 document.getElementById('menu-list').innerHTML = '<div style="color:red; text-align:center;">❌ Gagal memuat menu. Cek koneksi Anda.</div>';
@@ -137,7 +137,7 @@
                 const price = parseFloat(menu.price || menu.harga || 0);
 
                 const imageContent = menu.image
-                    ? `<img src="/storage/${menu.image}" style="width: 100%; height: 100%; object-fit: cover;">` 
+                    ? `<img src="/storage/${menu.image}" style="width: 100%; height: 100%; object-fit: cover;">`
                     : `☕`;
 
                 const cartItem = cart.find(c => c.menu_id === id);
@@ -186,7 +186,7 @@
             }
             
             updateKeranjangUI();
-            renderMenus(); 
+            renderMenus();
         }
 
         window.kurangiDariKeranjang = function(menuId) {
@@ -208,9 +208,9 @@
 
         function updateKeranjangUI() {
             const cartBox = document.getElementById('cart-box');
-            if(cart.length === 0) { 
-                cartBox.classList.remove('show'); 
-                return; 
+            if(cart.length === 0) {
+                cartBox.classList.remove('show');
+                return;
             }
 
             let totalQty = 0; subtotal = 0;
@@ -284,7 +284,7 @@
 
         window.batalQris = function() {
             document.getElementById('qris-modal').style.display = 'none';
-            document.getElementById('form-modal').style.display = 'flex'; 
+            document.getElementById('form-modal').style.display = 'flex';
         }
 
         // 5. Tembak Data ke Dapur
@@ -296,7 +296,7 @@
             const payload = {
                 customer_name: customerData.nama + " (QR Order)",
                 table_number: customerData.meja, // Bisa berupa angka meja, kata "Takeaway", atau "Delivery"
-                order_type: customerData.tipe, 
+                order_type: customerData.tipe,
                 payment_method: 'QRIS',
                 total_price: grandTotal,
                 items: cart
@@ -312,7 +312,7 @@
                 if(res.ok) {
                     const infoMeja = customerData.tipe === 'Dine In' ? `di Meja ${customerData.meja}` : `(Area Pick Up/Delivery)`;
                     alert(`🎉 PEMBAYARAN BERHASIL!\nPesanan sedang disiapkan dapur. Mohon ditunggu ${infoMeja}`);
-                    window.location.reload(); 
+                    window.location.reload();
                 } else {
                     alert('❌ Gagal memproses pesanan. Silakan coba lagi.');
                 }

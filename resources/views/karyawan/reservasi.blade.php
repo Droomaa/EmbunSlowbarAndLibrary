@@ -172,17 +172,17 @@
         try {
             const response = await fetch(`${API_URL_RES}/karyawan/reservations/${id}/status`, {
                 method: 'POST',
-                headers: { 
+                headers: {
                     'Authorization': `Bearer ${token_res}`,
-                    'Content-Type': 'application/json', 
-                    'Accept': 'application/json' 
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
                 },
                 body: JSON.stringify({ status: newStatus })
             });
 
             if(response.ok) {
                 // Memuat ulang data dari server untuk memastikan metrik atas ikut terupdate
-                fetchReservations(); 
+                fetchReservations();
             } else {
                 alert("Gagal merubah status. Silakan coba lagi.");
             }

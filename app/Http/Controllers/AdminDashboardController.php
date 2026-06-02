@@ -102,8 +102,8 @@ class AdminDashboardController extends Controller
     public function getDataTransaksi(Request $request)
     {
         try {
-            $dateFilter = $request->input('date'); 
-            $statusFilter = $request->input('status'); 
+            $dateFilter = $request->input('date');
+            $statusFilter = $request->input('status');
             $limit = $request->input('limit', 10);
             $search = $request->input('search');
 
@@ -218,7 +218,7 @@ class AdminDashboardController extends Controller
         try {
             $kategori = trim(strtolower($request->query('kategori', 'all')));
             $status = trim(strtolower($request->query('status', 'all')));
-            $search = trim(strtolower($request->query('search', ''))); 
+            $search = trim(strtolower($request->query('search', '')));
 
             $items = DB::table('inventories')->get();
 
@@ -264,7 +264,7 @@ class AdminDashboardController extends Controller
                     if (Str::contains($status, ['menipis', 'low'])) return $itemStatus === 'menipis';
                     if (Str::contains($status, ['aman', 'safe'])) return $itemStatus === 'aman';
                     
-                    return true; 
+                    return true;
                 });
             }
 
@@ -282,14 +282,14 @@ class AdminDashboardController extends Controller
                 // 🌟 FIX UTAMA: MENGGUNAKAN KEY 'table_data' AGAR TERBACA OLEH FRONTEND
                 'table_data' => $filteredItems->values()->all(),
                 'metrics' => [
-                    'habis' => $habis, 
-                    'hampir_habis' => $menipis, 
-                    'aman' => $aman, 
+                    'habis' => $habis,
+                    'hampir_habis' => $menipis,
+                    'aman' => $aman,
                     'total' => $items->count()
                 ]
             ], 200);
 
-        } catch (\Throwable $e) { 
+        } catch (\Throwable $e) {
             return response()->json(['error' => 'Gagal memproses filter: ' . $e->getMessage()], 500);
         }
     }

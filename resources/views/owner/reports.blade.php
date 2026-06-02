@@ -129,7 +129,7 @@
         if (paymentFilter !== 'all') {
             filteredData = filteredData.filter(trx => {
                 // Kalau payment_method kosong, asumsikan Tunai
-                const method = (trx.payment_method || 'Tunai').toLowerCase(); 
+                const method = (trx.payment_method || 'Tunai').toLowerCase();
                 return method === paymentFilter;
             });
         }

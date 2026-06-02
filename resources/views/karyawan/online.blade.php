@@ -49,17 +49,17 @@
         
         setInterval(() => {
             const icon = document.getElementById('refresh-icon');
-            icon.innerText = '🔄'; 
+            icon.innerText = '🔄';
             loadOnlineOrders().finally(() => {
-                setTimeout(() => icon.innerText = '✨', 500); 
+                setTimeout(() => icon.innerText = '✨', 500);
             });
-        }, 10000); 
+        }, 10000);
     });
 
     async function loadOnlineOrders() {
         const token = localStorage.getItem('embun_token');
         const container = document.getElementById('kanban-container');
-        const performaCard = document.getElementById('performa-card'); 
+        const performaCard = document.getElementById('performa-card');
 
         const formatRupiah = (angka) => {
             return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(angka);
@@ -86,7 +86,7 @@
 
                 document.getElementById('val-total-orders').innerText = onlineOrders.length;
 
-                container.innerHTML = ''; 
+                container.innerHTML = '';
                 
                 if (onlineOrders.length > 0) {
                     onlineOrders.reverse().forEach(trx => {

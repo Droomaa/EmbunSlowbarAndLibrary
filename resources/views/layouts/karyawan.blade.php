@@ -41,7 +41,8 @@
             <a href="/karyawan/reservasi" class="nav-link {{ request()->is('karyawan/reservasi') ? 'active' : '' }}">Verifikasi Reservasi</a>
             <a href="/karyawan/online" class="nav-link {{ request()->is('karyawan/online') ? 'active' : '' }}">Pesanan Online Masuk</a>
             <a href="/karyawan/offline" class="nav-link {{ request()->is('karyawan/offline') ? 'active' : '' }}">Pesanan Offline Masuk</a>
-            <a href="#" class="nav-link">Pengiriman Stok Bahan</a>
+            <a href="/karyawan/kasir" class="nav-link {{ request()->is('karyawan/kasir') ? 'active' : '' }}">Kasir</a>
+            {{-- <a href="#" class="nav-link">Pengiriman Stok Bahan</a> --}}
         </div>
         
         <div style="border-top: 1px solid #ddd; padding-top: 15px;">

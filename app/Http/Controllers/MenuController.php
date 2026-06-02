@@ -14,7 +14,7 @@ class MenuController extends Controller
     {
         $menus = Menu::all()->map(function ($menu) {
             // 🌟 KUNCI 1: Ubah ke Array dulu agar properti tambahan tidak dibuang oleh JSON
-            $data = $menu->toArray(); 
+            $data = $menu->toArray();
             
             $data['image_url'] = $menu->image ? asset('storage/' . $menu->image) : null;
             

@@ -56,7 +56,7 @@
                 <p style="color: #888; font-size: 13px; margin: 5px 0 0 0;">Mengelola catatan transaksi masuk dan keluar</p>
             </div>
             <div style="font-size: 12px; color: #666; display: flex; align-items: center; gap: 5px;">
-                Tampilkan 
+                Tampilkan
                 <select id="filter-limit" style="padding: 4px 8px; border: 1px solid #ddd; border-radius: 5px; outline: none; background: #eee; font-weight: bold;" onchange="loadDataTransaksi()">
                     <option value="10">10</option>
                     <option value="50">50</option>
@@ -227,7 +227,7 @@
         });
         
         closeModal();
-        loadDataTransaksi(); 
+        loadDataTransaksi();
     }
 
     // --- DELETE TRANSAKSI ---
@@ -249,7 +249,7 @@
         csvContent += "ID Transaksi,Waktu,Metode,Item Terjual,Total Harga,Status\n";
 
         currentTableData.forEach(row => {
-            const itemsEscaped = `"${row.items_text}"`; 
+            const itemsEscaped = `"${row.items_text}"`;
             csvContent += `#TRX-${row.order_id},${row.created_at},${row.payment_method},${itemsEscaped},${row.total_price},${row.status}\n`;
         });
 
@@ -257,7 +257,7 @@
         const link = document.createElement("a");
         link.setAttribute("href", encodedUri);
         link.setAttribute("download", "Riwayat_Transaksi_EmbunCafe.csv");
-        document.body.appendChild(link); 
+        document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
     }

@@ -1,13 +1,12 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pesanan Offline - Embun Cafe</title>
+@extends('layouts.karyawan')
+
+@section('title', 'Pesanan Offline - Embun Cafe')
+
+@section('content')
     <style>
-        body { font-family: sans-serif; background: #f4f3ed; margin: 0; padding: 20px; color: #333; }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
-        .header h2 { color: #4c7c5f; margin: 0; }
+        .offline-wrapper { font-family: sans-serif; background: #f4f3ed; margin: 0; padding: 20px; color: #333; border-radius: 12px; min-height: 80vh; }
+        .offline-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .offline-header h2 { color: #4c7c5f; margin: 0; }
         .btn-nav { text-decoration: none; background: white; padding: 8px 15px; border-radius: 8px; color: #555; font-weight: bold; border: 1px solid #ddd; transition: 0.2s; }
         .btn-nav:hover { background: #eee; }
         
@@ -17,36 +16,38 @@
         .order-card.Completed { border-left-color: #27ae60; opacity: 0.7; }
         .order-card.Reject { border-left-color: #e74c3c; opacity: 0.5; }
         
-        .badge { padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; background: #eee; }
-        .badge.dinein { background: #e6f4ea; color: #1e8e3e; }
-        .badge.takeaway { background: #fce8e6; color: #d93025; }
+        .badge-status { padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; background: #eee; }
+        .badge-status.dinein { background: #e6f4ea; color: #1e8e3e; }
+        .badge-status.takeaway { background: #fce8e6; color: #d93025; }
         
         .action-btns { display: flex; gap: 10px; margin-top: 15px; }
-        .btn { flex: 1; padding: 8px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; color: white; transition: 0.2s; }
-        .btn:hover { opacity: 0.8; }
+        .btn-act { flex: 1; padding: 8px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; color: white; transition: 0.2s; }
+        .btn-act:hover { opacity: 0.8; }
         .btn-acc { background: #27ae60; }
         .btn-rej { background: #e74c3c; }
     </style>
-</head>
-<body>
 
-    <div class="header">
-        <div>
-            <h2>🍽️ Pesanan Masuk (Dine In & Takeaway)</h2>
-            <p style="margin: 5px 0 0 0; color: #666;">Kelola antrean khusus makan di tempat & bawa pulang</p>
+    <div class="offline-wrapper">
+        <div class="offline-header">
+            <div>
+                <h2>🍽️ Pesanan Masuk (Dine In & Takeaway)</h2>
+                <p style="margin: 5px 0 0 0; color: #666;">Kelola antrean khusus makan di tempat & bawa pulang</p>
+            </div>
+            <a href="/karyawan/dashboard" class="btn-nav">⬅️ Kembali ke Dashboard</a>
         </div>
-        <a href="/karyawan/dashboard" class="btn-nav">⬅️ Kembali ke Dashboard</a>
-    </div>
 
-    <div class="board" id="order-board">
-        <p style="color: #888;">⏳ Memuat data pesanan...</p>
+        <div class="board" id="order-board">
+            <p style="color: #888;">⏳ Memuat data pesanan...</p>
+        </div>
     </div>
+@endsection
 
+@section('scripts')
     <script>
-        const API_URL = 'http://127.0.0.1:8000/api';
-        const token = localStorage.getItem('embun_token');
+        // 🌟 NAMA VARIABEL DIUBAH AGAR TIDAK BENTROK DENGAN LAYOUT
+        const OFFLINE_API_URL = 'http://127.0.0.1:8000/api';
+        const offlineToken = localStorage.getItem('embun_token');
 
-        // Fungsi Format Rupiah
         const formatRupiah = (angka) => {
             return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(angka);
         };
@@ -55,9 +56,9 @@
 
         async function loadOrders() {
             try {
-                const res = await fetch(`${API_URL}/karyawan/orders/offline`, {
+                const res = await fetch(`${OFFLINE_API_URL}/karyawan/orders/offline`, {
                     headers: {
-                        'Authorization': `Bearer ${token}`,
+                        'Authorization': `Bearer ${offlineToken}`,
                         'Accept': 'application/json'
                     }
                 });
@@ -89,7 +90,6 @@
                 const typeIcon = order.order_type === 'Dine In' ? '🍽️' : '🥡';
                 const time = new Date(order.created_at).toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'});
 
-                // 🌟 LOGIKA MERENDER DAFTAR ITEM PESANAN
                 let itemsHtml = '';
                 if (order.items && order.items.length > 0) {
                     order.items.forEach(item => {
@@ -111,7 +111,7 @@
                         <div>
                             <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 10px;">
                                 <strong style="font-size: 18px;">Meja ${order.table_number || '-'}</strong>
-                                <span class="badge ${typeClass}">${typeIcon} ${order.order_type}</span>
+                                <span class="badge-status ${typeClass}">${typeIcon} ${order.order_type}</span>
                             </div>
                             <p style="margin: 0 0 15px 0; font-size: 14px; color: #555;">👤 ${order.customer_name}</p>
                             
@@ -129,8 +129,8 @@
                             
                             ${order.status === 'Pending' ? `
                                 <div class="action-btns">
-                                    <button class="btn btn-acc" onclick="updateStatus(${order.order_id}, 'Completed')">✅ Selesai</button>
-                                    <button class="btn btn-rej" onclick="updateStatus(${order.order_id}, 'Reject')">❌ Tolak</button>
+                                    <button class="btn-act btn-acc" onclick="updateStatus(${order.order_id}, 'Completed')">✅ Selesai</button>
+                                    <button class="btn-act btn-rej" onclick="updateStatus(${order.order_id}, 'Reject')">❌ Tolak</button>
                                 </div>
                             ` : ''}
                         </div>
@@ -143,18 +143,18 @@
             if(!confirm(`Yakin mengubah pesanan ini menjadi ${newStatus}?`)) return;
 
             try {
-                const res = await fetch(`${API_URL}/karyawan/orders/${id}/status`, {
+                const res = await fetch(`${OFFLINE_API_URL}/karyawan/orders/${id}/status`, {
                     method: 'POST',
-                    headers: { 
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json', 
-                        'Accept': 'application/json' 
+                    headers: {
+                        'Authorization': `Bearer ${offlineToken}`,
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
                     },
                     body: JSON.stringify({ status: newStatus })
                 });
 
                 if(res.ok) {
-                    loadOrders(); 
+                    loadOrders();
                 } else {
                     alert("Gagal merubah status.");
                 }
@@ -163,5 +163,4 @@
             }
         }
     </script>
-</body>
-</html>
+@endsection

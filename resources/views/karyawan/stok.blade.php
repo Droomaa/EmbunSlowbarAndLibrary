@@ -132,7 +132,7 @@
     const token = localStorage.getItem('embun_token');
     
     // Simpan semua data mentah ke variabel ini agar bisa di-filter tanpa fetch ulang
-    let allStockData = []; 
+    let allStockData = [];
 
     document.addEventListener('DOMContentLoaded', fetchStockData);
 

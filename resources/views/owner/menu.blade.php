@@ -88,7 +88,7 @@
             </div>
             
             <form id="menu-form" onsubmit="submitMenu(event)">
-                <input type="hidden" id="input-id"> 
+                <input type="hidden" id="input-id">
                 
                 <div class="form-group">
                     <label>Menu Name</label>
@@ -159,8 +159,8 @@
     const token = localStorage.getItem('embun_token');
     
     let allMenus = [];
-    let modalMode = 'add'; 
-    let ingredientsArray = []; 
+    let modalMode = 'add';
+    let ingredientsArray = [];
 
     document.addEventListener('DOMContentLoaded', () => {
         loadMenusData();
@@ -306,7 +306,7 @@
                 // Cek path gambar yang aman
                 const imageSrc = menu.image_url ? menu.image_url : (menu.image ? `/storage/${menu.image}` : null);
                 
-                const imgHtml = imageSrc 
+                const imgHtml = imageSrc
                     ? `<img src="${imageSrc}" style="width: 40px; height: 40px; border-radius: 8px; object-fit: cover; border: 1px solid #eee;">`
                     : `<div style="width: 40px; height: 40px; border-radius: 8px; background: #eee; display: flex; align-items: center; justify-content: center; font-size: 16px;">☕</div>`;
 
@@ -366,22 +366,22 @@
 
         if (modalMode === 'edit') {
             url = `${API_URL_MENU}/owner/menus/${id}`;
-            formData.append('_method', 'PUT'); 
+            formData.append('_method', 'PUT');
         }
 
         try {
             const response = await fetch(url, {
                 method: method,
-                headers: { 
-                    'Authorization': `Bearer ${token}`, 
-                    'Accept': 'application/json' 
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Accept': 'application/json'
                 },
                 body: formData
             });
 
             if (response.ok) {
                 closeModal();
-                loadMenusData(); 
+                loadMenusData();
             } else {
                 const errData = await response.json();
                 alert('GAGAL: ' + (errData.error || 'Terjadi kesalahan.'));
@@ -392,7 +392,7 @@
             btnSave.innerText = 'Save Menu';
             btnSave.disabled = false;
         }
-    }   
+    }
 
     window.deleteMenu = async function(id) {
         if(!confirm('Yakin ingin menghapus menu ini dari katalog?')) return;
@@ -404,7 +404,7 @@
             });
 
             if (response.ok) {
-                loadMenusData(); 
+                loadMenusData();
             } else {
                 alert('Gagal menghapus menu.');
             }
