@@ -1,0 +1,76 @@
+/* ===========================
+   TERRA DESIGN SYSTEM — Tokens
+   =========================== */
+
+:root {
+  /* Colors */
+  --color-primary: #4a7c59;
+  --color-primary-hover: #3d6a4b;
+  --color-primary-light: rgba(74, 124, 89, 0.1);
+  --color-background: #faf6f0;
+  --color-surface: #ffffff;
+  --color-text-primary: #3D2B1F;
+  --color-text-secondary: #6b5e54;
+  --color-text-muted: #9b8e84;
+  --color-tertiary: #705c30;
+  --color-accent: #E2725B;
+  --color-soft-neutral: #f0ebe3;
+  --color-border-soft: rgba(61, 43, 31, 0.12);
+  --color-shadow: rgba(46, 50, 48, 0.06);
+  --color-success: #1e8e3e;
+  --color-success-bg: #e6f4ea;
+  --color-error: #d93025;
+  --color-error-bg: #fce8e6;
+  --color-warning: #E2725B;
+  --color-warning-bg: #fef3e8;
+
+  /* Typography */
+  --font-heading: 'Literata', 'Georgia', serif;
+  --font-body: 'Nunito Sans', 'Helvetica Neue', sans-serif;
+
+  /* Font Sizes */
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 1.875rem;
+  --text-4xl: 2.25rem;
+  --text-5xl: 3rem;
+
+  /* Spacing */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+  --space-20: 5rem;
+  --space-24: 6rem;
+
+  /* Radius */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-full: 999px;
+
+  /* Shadow */
+  --shadow-sm: 0 1px 3px rgba(46, 50, 48, 0.04);
+  --shadow-md: 0 4px 20px rgba(46, 50, 48, 0.06);
+  --shadow-lg: 0 8px 30px rgba(46, 50, 48, 0.1);
+
+  /* Transitions */
+  --transition-fast: 150ms ease;
+  --transition-normal: 250ms ease;
+  --transition-slow: 400ms ease;
+
+  /* Layout */
+  --container-max: 1280px;
+  --navbar-height: 72px;
+}

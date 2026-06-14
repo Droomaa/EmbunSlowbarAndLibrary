@@ -12,34 +12,21 @@ class MenuController extends Controller
 {
     public function index(): JsonResponse
     {
-        $menus = Menu::all()->map(function ($menu) {
-            // 🌟 KUNCI 1: Ubah ke Array dulu agar properti tambahan tidak dibuang oleh JSON
+        // Fix N+1 query by eager loading ingredients
+        $menus = Menu::with('ingredients')->get()->map(function ($menu) {
             $data = $menu->toArray();
-            
             $data['image_url'] = $menu->image ? asset('storage/' . $menu->image) : null;
             
-            // 🌟 KUNCI 2: Ambil data resep dan paksa masuk ke dalam array $data
-            try {
-                $rawIngredients = DB::table('menu_ingredients')->where('menu_id', $menu->id)->get();
-                $mappedIngredients = [];
-                
-                foreach ($rawIngredients as $ing) {
-                    $invId = $ing->inventory_id ?? $ing->bahan_id;
-                    $qty = $ing->quantity_needed ?? $ing->qty ?? 0;
-
-                    $inv = DB::table('inventories')->where('id', $invId)->first();
-                    $invName = $inv ? ($inv->item_name ?? $inv->name ?? 'Bahan Baku') : 'Bahan Terhapus';
-
-                    $mappedIngredients[] = [
-                        'inventory_id' => $invId,
-                        'inventory_name' => $invName,
-                        'quantity_needed' => $qty
-                    ];
-                }
-                $data['ingredients'] = $mappedIngredients;
-            } catch (\Exception $e) {
-                $data['ingredients'] = [];
+            // Map eager loaded ingredients back to the expected array format for frontend compatibility
+            $mappedIngredients = [];
+            foreach ($menu->ingredients as $ing) {
+                $mappedIngredients[] = [
+                    'inventory_id' => $ing->id,
+                    'inventory_name' => $ing->item_name,
+                    'quantity_needed' => $ing->pivot->quantity_needed
+                ];
             }
+            $data['ingredients'] = $mappedIngredients;
             
             return $data;
         });
@@ -62,6 +49,7 @@ class MenuController extends Controller
         $request->validate([
             'menuName' => 'required|string|max:255',
             'price' => 'required|numeric',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048'
         ]);
 
         DB::beginTransaction();
@@ -102,7 +90,8 @@ class MenuController extends Controller
             
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json(['error' => $e->getMessage()], 500);
+            \Log::error('Menu creation failed: ' . $e->getMessage());
+            return response()->json(['error' => 'Terjadi kesalahan server. Silakan coba lagi.'], 500);
         }
     }
 
@@ -159,7 +148,8 @@ class MenuController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json(['error' => $e->getMessage()], 500);
+            \Log::error('Menu update failed: ' . $e->getMessage());
+            return response()->json(['error' => 'Terjadi kesalahan server. Silakan coba lagi.'], 500);
         }
     }
 
@@ -174,7 +164,8 @@ class MenuController extends Controller
             $menu->delete();
             return response()->json(['message' => 'Menu berhasil dihapus!'], 200);
         } catch (\Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 500);
+            \Log::error('Menu deletion failed: ' . $e->getMessage());
+            return response()->json(['error' => 'Terjadi kesalahan server. Silakan coba lagi.'], 500);
         }
     }
 }

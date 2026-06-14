@@ -13,10 +13,10 @@ class OwnerDashboardController extends Controller
         // Memastikan zona waktu sesuai dengan Malang (WIB)
         $today = Carbon::now('Asia/Jakarta')->toDateString();
 
-        // 1 & 2. Penjualan & Total Order Hari Ini
+        // 1 & 2. Penjualan & Total Order Hari Ini (Hanya Status Completed)
         $ordersToday = DB::table('orders')->whereDate('created_at', $today)->get();
-        $todaySales = $ordersToday->sum('total_price');
-        $totalOrders = $ordersToday->count();
+        $todaySales = $ordersToday->where('status', 'Completed')->sum('total_price');
+        $totalOrders = $ordersToday->count(); // Tetap menghitung semua order yang masuk hari ini
 
         // 3 & 5. FIX: Ganti 'stock' menjadi 'quantity' sesuai kolom di database
         $inventories = DB::table('inventories')->get();
@@ -50,16 +50,23 @@ class OwnerDashboardController extends Controller
     public function getSalesReports()
     {
         // Ambil semua order, urutkan dari yang paling baru
-        $orders = DB::table('orders')->orderBy('created_at', 'desc')->get();
+        $orders = \App\Models\Order::withCount('items')->orderBy('created_at', 'desc')->get();
         
         $totalRevenue = $orders->sum('total_price');
         $totalOrders = $orders->count();
         $avgOrderValue = $totalOrders > 0 ? $totalRevenue / $totalOrders : 0;
 
+        $mappedOrders = $orders->map(function($order) {
+            $order->id = $order->order_id;
+            $order->user_id = $order->customer_name;
+            $order->items_count = $order->items_count;
+            return $order;
+        });
+
         return response()->json([
             'total_revenue' => $totalRevenue,
             'avg_order_value' => $avgOrderValue,
-            'transactions' => $orders
+            'transactions' => $mappedOrders
         ], 200);
     }
 
@@ -100,7 +107,11 @@ class OwnerDashboardController extends Controller
     public function getStockReports()
     {
         // Ambil semua bahan baku, urutkan berdasarkan abjad
-        $inventories = DB::table('inventories')->orderBy('item_name', 'asc')->get();
+        $inventories = DB::table('inventories')->orderBy('item_name', 'asc')->get()->map(function($item) {
+            $item->name = $item->item_name; // Alias for frontend
+            $item->min_stock_level = 500; // Hardcoded default based on STATUS_CONVENTION
+            return $item;
+        });
         
         return response()->json([
             'data' => $inventories
@@ -150,7 +161,8 @@ class OwnerDashboardController extends Controller
             return response()->json(['message' => 'Akun berhasil ditambahkan!'], 201);
             
         } catch (\Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 500);
+            \Log::error('Error storing account: ' . $e->getMessage());
+            return response()->json(['error' => 'Terjadi kesalahan server. Silakan coba lagi.'], 500);
         }
     }
     // ==========================================
@@ -239,7 +251,8 @@ class OwnerDashboardController extends Controller
         } catch (\Exception $e) {
             // Batalkan semua penyimpanan jika terjadi error di tengah jalan
             DB::rollBack();
-            return response()->json(['error' => 'Gagal menyimpan data: ' . $e->getMessage()], 500);
+            \Log::error('Gagal menyimpan menu: ' . $e->getMessage());
+            return response()->json(['error' => 'Terjadi kesalahan server. Silakan coba lagi.'], 500);
         }
     }
 
@@ -264,7 +277,8 @@ class OwnerDashboardController extends Controller
             DB::table('menus')->where('id', $id)->update($data);
             return response()->json(['message' => 'Menu berhasil diperbarui!'], 200);
         } catch (\Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 500);
+            \Log::error('Error updating menu: ' . $e->getMessage());
+            return response()->json(['error' => 'Terjadi kesalahan server. Silakan coba lagi.'], 500);
         }
     }
 
@@ -275,7 +289,8 @@ class OwnerDashboardController extends Controller
             DB::table('menus')->where('id', $id)->delete();
             return response()->json(['message' => 'Menu dihapus!'], 200);
         } catch (\Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 500);
+            \Log::error('Error deleting menu: ' . $e->getMessage());
+            return response()->json(['error' => 'Terjadi kesalahan server. Silakan coba lagi.'], 500);
         }
     }
     // ==========================================
@@ -285,7 +300,12 @@ class OwnerDashboardController extends Controller
     // 1. Ambil Data Transaksi
     public function getTransactions()
     {
-        $transactions = DB::table('orders')->orderBy('created_at', 'desc')->get();
+        $transactions = \App\Models\Order::withCount('items')->orderBy('created_at', 'desc')->get()->map(function($order) {
+            $order->id = $order->order_id;
+            $order->user_id = $order->customer_name;
+            $order->items_count = $order->items_count;
+            return $order;
+        });
         return response()->json(['transactions' => $transactions], 200);
     }
 
@@ -310,10 +330,14 @@ class OwnerDashboardController extends Controller
                 $jumlahItemDitemukan = $orderItems->count();
                 $jumlahBahanDipotong = 0;
 
+                $menuIds = $orderItems->pluck('menu_id')->toArray();
+                $allIngredients = DB::table('menu_ingredients')
+                                    ->whereIn('menu_id', $menuIds)
+                                    ->get()
+                                    ->groupBy('menu_id');
+
                 foreach ($orderItems as $item) {
-                    $ingredients = DB::table('menu_ingredients')
-                        ->where('menu_id', $item->menu_id)
-                        ->get();
+                    $ingredients = $allIngredients->get($item->menu_id, collect());
 
                     foreach ($ingredients as $ingredient) {
                         $totalUsed = $ingredient->quantity_needed * $item->quantity;
@@ -343,7 +367,8 @@ class OwnerDashboardController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json(['error' => 'Gagal memproses stok: ' . $e->getMessage()], 500);
+            \Log::error('Gagal memproses stok: ' . $e->getMessage());
+            return response()->json(['error' => 'Terjadi kesalahan server. Silakan coba lagi.'], 500);
         }
     }
 
@@ -378,51 +403,3 @@ class OwnerDashboardController extends Controller
     }
 }
 
-//ALL
-// <?php
-
-// namespace App\Http\Controllers;
-
-// use Illuminate\Http\Request;
-// use Illuminate\Support\Facades\DB;
-// use Carbon\Carbon;
-
-// class OwnerDashboardController extends Controller
-// {
-//     public function getOverview()
-//     {
-//         // 1 & 2. Penjualan & Total Order
-//         // Kita hitung SEMUA order yang ada di database sementara waktu. 
-//         // Ini untuk menghindari bug zona waktu (UTC vs WIB) saat testing tengah malam.
-//         $orders = DB::table('orders')->get();
-//         $todaySales = $orders->sum('total_price'); 
-//         $totalOrders = $orders->count();
-
-//         // 3 & 5. Status Stok (Sudah sukses pakai 'quantity')
-//         $inventories = DB::table('inventories')->get();
-//         $outOfStock = $inventories->where('quantity', '<=', 0)->count();
-//         $runningLow = $inventories->where('quantity', '>', 0)->where('quantity', '<=', 500)->count();
-//         $available = $inventories->where('quantity', '>', 500)->count();
-        
-//         $lowStockAlerts = $outOfStock + $runningLow;
-
-//         // 4. Reservasi Aktif
-//         // Kita HAPUS filter tanggalnya. 
-//         // Jadi SEMUA reservasi yang statusnya Pending/Confirmed akan terhitung sebagai "Active".
-//         $activeReservations = DB::table('reservations')
-//             ->whereIn('status', ['Pending', 'Confirmed', 'PENDING', 'CONFIRMED'])
-//             ->count();
-
-//         return response()->json([
-//             'today_sales' => $todaySales,
-//             'total_orders' => $totalOrders,
-//             'low_stock_alerts' => $lowStockAlerts,
-//             'active_reservations' => $activeReservations,
-//             'stock_status' => [
-//                 'available' => $available,
-//                 'running_low' => $runningLow,
-//                 'out_of_stock' => $outOfStock
-//             ]
-//         ], 200);
-//     }
-// }

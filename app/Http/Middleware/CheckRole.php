@@ -16,8 +16,12 @@ class CheckRole
         }
 
         $userRole = strtolower(trim(Auth::user()->role));
+        
+        $allowedRoles = array_map(function($role) {
+            return strtolower(trim($role));
+        }, $roles);
 
-        if (!in_array($userRole, $roles)) {
+        if (!in_array($userRole, $allowedRoles)) {
             abort(403, 'AKSES DITOLAK! Anda tidak memiliki izin untuk membuka halaman ini.');
         }
 

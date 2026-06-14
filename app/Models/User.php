@@ -31,4 +31,9 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    public function staffShifts()
+    {
+        return $this->hasMany(StaffShift::class);
+    }
 }

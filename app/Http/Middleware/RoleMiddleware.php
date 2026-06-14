@@ -24,7 +24,13 @@ class RoleMiddleware
 
         // Cek apakah role user ada di dalam daftar role yang diizinkan untuk route ini
         $user = Auth::user();
-        if (!in_array($user->role, $roles)) {
+        
+        $userRole = strtolower(trim($user->role));
+        $allowedRoles = array_map(function($role) {
+            return strtolower(trim($role));
+        }, $roles);
+
+        if (!in_array($userRole, $allowedRoles)) {
             return response()->json(['message' => 'Forbidden. Anda tidak memiliki akses ke resource ini.'], 403);
         }
 

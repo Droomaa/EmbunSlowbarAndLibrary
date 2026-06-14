@@ -9,6 +9,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class OrderItem extends Model
 {
     protected $primaryKey = 'item_id';
+    public $incrementing = true;
+    protected $keyType = 'int';
     protected $fillable = ['order_id', 'menu_id', 'quantity', 'subtotal'];
     public function variant(): BelongsTo
 {
@@ -21,9 +23,8 @@ public function addOns(): HasMany
     return $this->hasMany(OrderItemAddon::class, 'order_item_id', 'item_id');
 }
 
-// Relasi: Satu item pesanan itu milik satu Menu tertentu
-    public function menu()
-    {
-        return $this->belongsTo(Menu::class, 'menu_id');
-    }
+public function menu(): BelongsTo
+{
+    return $this->belongsTo(Menu::class, 'menu_id', 'id');
+}
 }

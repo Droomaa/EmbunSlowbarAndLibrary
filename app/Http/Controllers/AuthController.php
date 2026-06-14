@@ -23,9 +23,25 @@ class AuthController extends Controller
         ]);
 
         if (Auth::attempt($credentials)) {
+            $user = Auth::user();
+
+            if ($request->wantsJson() || $request->is('api/*')) {
+                $token = $user->createToken('auth_token')->plainTextToken;
+                return response()->json([
+                    'message' => 'Login berhasil',
+                    'token' => $token,
+                    'user_id' => $user->id,
+                    'role' => $user->role,
+                ]);
+            }
+
             $request->session()->regenerate();
             
-            return $this->redirectBerdasarkanRole(Auth::user()->role);
+            return $this->redirectBerdasarkanRole($user->role);
+        }
+
+        if ($request->wantsJson() || $request->is('api/*')) {
+            return response()->json(['message' => 'Username atau password salah.'], 401);
         }
 
         return back()->withErrors([
@@ -35,6 +51,11 @@ class AuthController extends Controller
 
     public function logout(Request $request)
     {
+        if ($request->wantsJson() || $request->is('api/*')) {
+            $request->user()->currentAccessToken()->delete();
+            return response()->json(['message' => 'Logout berhasil']);
+        }
+
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();

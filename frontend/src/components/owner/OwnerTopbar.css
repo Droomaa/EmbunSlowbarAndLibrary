@@ -1,0 +1,139 @@
+.owner-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.5rem 2rem;
+  background-color: var(--color-bg-main);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.owner-topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.owner-topbar-title {
+  font-family: var(--font-heading);
+  font-size: 1.5rem;
+  color: var(--color-text-main);
+  margin: 0;
+}
+
+.owner-topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.owner-search-wrapper {
+  position: relative;
+  width: 300px;
+}
+
+.owner-search-icon {
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color-text-muted);
+}
+
+.owner-search-input {
+  width: 100%;
+  padding: 0.6rem 1rem 0.6rem 2.5rem;
+  border-radius: 50px;
+  border: 1px solid var(--color-border);
+  background-color: var(--color-bg-surface);
+  font-family: var(--font-body);
+  transition: all 0.2s;
+}
+
+.owner-search-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(74, 124, 89, 0.1);
+}
+
+.owner-topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.owner-icon-btn {
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.owner-icon-btn:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+  color: var(--color-text-main);
+}
+
+.owner-profile {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.owner-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: var(--color-primary);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}
+
+.owner-profile-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.owner-profile-name {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.owner-profile-role {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.mobile-menu-btn {
+  display: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-main);
+}
+
+@media (max-width: 768px) {
+  .owner-topbar {
+    padding: 1rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+  .owner-search-wrapper {
+    width: 100%;
+    order: 3;
+  }
+  .mobile-menu-btn {
+    display: block;
+  }
+  .owner-profile-info {
+    display: none;
+  }
+}

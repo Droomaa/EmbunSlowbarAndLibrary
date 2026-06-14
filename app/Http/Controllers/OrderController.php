@@ -91,7 +91,7 @@ class OrderController extends Controller
                     $inventoryItem = \App\Models\Inventory::find($ingredient->inventory_id);
                     
                     if ($inventoryItem) {
-                        $inventoryItem->decrement('stock_quantity', $neededTotal);
+                        $inventoryItem->decrement('quantity', $neededTotal);
                     }
                 }
             }

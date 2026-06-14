@@ -1,0 +1,28 @@
+/* ===========================
+   TERRA — Responsive Breakpoints
+   =========================== */
+
+/* Tablet: 768px - 1279px */
+@media (max-width: 1279px) {
+  :root { --container-max: 960px; }
+}
+
+/* Mobile: < 768px */
+@media (max-width: 767px) {
+  :root { --container-max: 100%; }
+  .container { padding: 0 var(--space-4); }
+  .section { padding: var(--space-12) 0; }
+  h1 { font-size: var(--text-3xl); }
+  h2 { font-size: var(--text-2xl); }
+
+  /* Mobile cart bottom sheet */
+  .cart-panel-desktop { display: none; }
+  .cart-mobile-trigger { display: flex !important; }
+  .cart-bottom-sheet { display: block !important; }
+}
+
+@media (min-width: 768px) {
+  .cart-mobile-trigger { display: none !important; }
+  .cart-bottom-sheet { display: none !important; }
+  .cart-panel-desktop { display: block; }
+}

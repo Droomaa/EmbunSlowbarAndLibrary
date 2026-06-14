@@ -1,0 +1,154 @@
+.karyawan-stock-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.karyawan-page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.karyawan-page-title {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: 1.5rem;
+}
+
+.karyawan-page-subtitle {
+  margin: 0.25rem 0 0 0;
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+}
+
+.karyawan-stock-summary {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+}
+
+.stock-summary-card {
+  background-color: var(--color-bg-surface);
+  padding: 1.5rem;
+  border-radius: var(--radius-lg);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  box-shadow: var(--shadow-sm);
+  border-bottom: 3px solid transparent;
+}
+
+.stock-summary-card.safe {
+  border-bottom-color: var(--color-primary);
+}
+
+.stock-summary-card.warning {
+  border-bottom-color: var(--color-warning);
+}
+
+.stock-summary-card.danger {
+  border-bottom-color: var(--color-danger);
+}
+
+.stock-summary-card.total {
+  border-bottom-color: var(--color-text-main);
+}
+
+.stock-summary-label {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.stock-summary-value {
+  font-size: 1.8rem;
+  font-weight: 700;
+  font-family: var(--font-heading);
+  line-height: 1;
+}
+
+.karyawan-table-container {
+  background-color: var(--color-bg-surface);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.karyawan-table-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.karyawan-table-search {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.karyawan-table-search input {
+  padding: 0.6rem 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  width: 300px;
+  outline: none;
+}
+
+.karyawan-table-search input:focus {
+  border-color: var(--color-primary);
+}
+
+.karyawan-stock-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.karyawan-stock-table th,
+.karyawan-stock-table td {
+  padding: 1rem;
+  text-align: left;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.karyawan-stock-table th {
+  font-weight: 600;
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.karyawan-stock-table tbody tr:hover {
+  background-color: var(--color-bg-main);
+}
+
+.stock-item-name {
+  font-weight: 700;
+  color: var(--color-text-main);
+}
+
+.stock-qty-badge {
+  padding: 0.3rem 0.6rem;
+  border-radius: 100px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.stock-qty-badge.safe {
+  background-color: #e8efe9;
+  color: var(--color-primary);
+}
+
+.stock-qty-badge.warning {
+  background-color: #fdf6e3;
+  color: var(--color-warning);
+}
+
+.stock-qty-badge.danger {
+  background-color: #fcf4f4;
+  color: var(--color-danger);
+}

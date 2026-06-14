@@ -13,11 +13,11 @@ class AdminPenjualanController extends Controller
     {
         $orders = Order::with('items.menu')->orderBy('created_at', 'desc')->get();
 
-        $totalPenjualan = $orders->sum('total_price');
+        $totalPenjualan = $orders->where('status', 'Completed')->sum('total_price');
         $totalTransaksi = $orders->count();
         $totalPelanggan = $orders->pluck('customer_name')->unique()->count();
         
-        $dibatalkan = $orders->where('total_price', 0)->count();
+        $dibatalkan = $orders->where('status', 'Cancelled')->count();
 
         return response()->json([
             'message' => 'Berhasil mengambil data laporan penjualan',
@@ -65,8 +65,8 @@ class AdminPenjualanController extends Controller
                 $bestSellerQuery->whereBetween('orders.created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
             }
 
-            $bestSeller = $bestSellerQuery->select('menus.menuName', 'menus.category', DB::raw('SUM(order_items.quantity) as total_sold'))
-                ->groupBy('menus.id', 'menus.menuName', 'menus.category')
+            $bestSeller = $bestSellerQuery->select('menus.menuName', 'menus.description as category', DB::raw('SUM(order_items.quantity) as total_sold'))
+                ->groupBy('menus.id', 'menus.menuName', 'menus.description')
                 ->orderBy('total_sold', 'desc')
                 ->first();
 
@@ -102,7 +102,8 @@ class AdminPenjualanController extends Controller
             ], 200);
 
         } catch (\Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 500);
+            \Log::error('Error get laporan penjualan: ' . $e->getMessage());
+            return response()->json(['error' => 'Terjadi kesalahan server. Silakan coba lagi.'], 500);
         }
     }
 }

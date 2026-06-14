@@ -13,8 +13,8 @@ class AdminStokController extends Controller
         $inventories = Inventory::all();
 
         $habis = $inventories->where('quantity', '<=', 0)->count();
-        $hampirHabis = $inventories->where('quantity', '>', 0)->where('quantity', '<=', 10)->count();
-        $aman = $inventories->where('quantity', '>', 10)->count();
+        $hampirHabis = $inventories->where('quantity', '>', 0)->where('quantity', '<=', 500)->count();
+        $aman = $inventories->where('quantity', '>', 500)->count();
         $total = $inventories->count();
 
         return response()->json([

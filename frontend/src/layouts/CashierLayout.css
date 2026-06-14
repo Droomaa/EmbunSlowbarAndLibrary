@@ -1,0 +1,104 @@
+.cashier-layout-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background-color: var(--color-bg-main);
+  overflow: hidden;
+}
+
+.cashier-topbar {
+  height: 70px;
+  background-color: var(--color-bg-main);
+  border-bottom: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 2rem;
+}
+
+.cashier-topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+}
+
+.cashier-logo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--color-primary);
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 1.25rem;
+  text-decoration: none;
+}
+
+.cashier-logo-icon {
+  width: 32px;
+  height: 32px;
+  background-color: var(--color-primary);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.cashier-nav-list {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.cashier-nav-item {
+  color: var(--color-text-muted);
+  text-decoration: none;
+  font-weight: 600;
+  padding: 0.5rem 0;
+  position: relative;
+}
+
+.cashier-nav-item.active {
+  color: var(--color-primary);
+}
+
+.cashier-nav-item.active::after {
+  content: '';
+  position: absolute;
+  bottom: -22px; /* to align with topbar bottom */
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background-color: var(--color-primary);
+  border-radius: 3px 3px 0 0;
+}
+
+.cashier-topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.cashier-shift-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background-color: var(--color-danger);
+  color: white;
+  border: none;
+  border-radius: 100px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.cashier-shift-btn:hover {
+  opacity: 0.9;
+}
+
+.cashier-main-content {
+  flex: 1;
+  display: flex;
+  overflow: hidden; /* prevents scroll on main, handles scroll in columns */
+}

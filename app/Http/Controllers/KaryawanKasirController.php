@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Menu;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\StaffShift;
 use Illuminate\Support\Facades\DB;
 
 class KaryawanKasirController extends Controller
@@ -20,6 +21,24 @@ class KaryawanKasirController extends Controller
     // API: Proses Checkout (Kasir Offline & QR Menu)
     public function checkout(Request $request)
     {
+        $user = $request->user();
+        $staffShiftId = null;
+
+        if ($user && $user->role === 'Staff') {
+            $activeShift = StaffShift::where('user_id', $user->id)
+                ->where('status', 'Active')
+                ->first();
+
+            if (!$activeShift) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Anda harus memulai shift sebelum membuat transaksi.'
+                ], 422);
+            }
+
+            $staffShiftId = $activeShift->id;
+        }
+
         try {
             DB::beginTransaction();
 
@@ -35,6 +54,7 @@ class KaryawanKasirController extends Controller
             // Bikin record Order (Struk)
             $order = new Order();
             $order->customer_name = $request->input('customer_name', 'Walk-in Customer');
+            $order->staff_shift_id = $staffShiftId;
             
             // --- DATA MEJA & PEMBAYARAN ---
             $order->table_number = $request->input('table_number');
@@ -67,7 +87,8 @@ class KaryawanKasirController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json(['message' => 'Waduh, gagal menyimpan transaksi: ' . $e->getMessage()], 500);
+            \Log::error('Gagal memproses kasir: ' . $e->getMessage());
+            return response()->json(['message' => 'Terjadi kesalahan server. Silakan coba lagi.'], 500);
         }
     }
     
@@ -75,32 +96,35 @@ class KaryawanKasirController extends Controller
     public function getOfflineOrders()
     {
         try {
-            // 1. Ambil data pesanan utama
-            $orders = DB::table('orders')
+            $orders = \App\Models\Order::with('items.menu')
                         ->whereIn('order_type', ['Dine In', 'Takeaway'])
                         ->orderBy('created_at', 'desc')
-                        ->get();
-            
-            // 2. Ambil detail item untuk masing-masing pesanan
-            foreach ($orders as $order) {
-                // Pastikan order_id yang dipakai akurat
-                $orderId = $order->order_id ?? $order->id;
-
-                $items = DB::table('order_items')
-                    ->join('menus', 'order_items.menu_id', '=', 'menus.id')
-                    ->where('order_items.order_id', $orderId)
-                    // HANYA MENGAMBIL menuName agar tidak terjadi error SQL "Column not found"
-                    ->select('menus.menuName', 'order_items.quantity', 'order_items.subtotal')
-                    ->get();
-                
-                $order->items = $items;
-            }
+                        ->get()
+                        ->map(function ($order) {
+                            return [
+                                'order_id' => $order->order_id,
+                                'customer_name' => $order->customer_name,
+                                'table_number' => $order->table_number,
+                                'total_price' => $order->total_price,
+                                'status' => $order->status,
+                                'payment_method' => $order->payment_method,
+                                'order_type' => $order->order_type,
+                                'created_at' => $order->created_at,
+                                'items' => $order->items->map(function ($item) {
+                                    return [
+                                        'menuName' => $item->menu ? $item->menu->menuName : 'Menu Terhapus',
+                                        'quantity' => $item->quantity,
+                                        'subtotal' => $item->subtotal
+                                    ];
+                                })
+                            ];
+                        });
                         
             return response()->json(['data' => $orders], 200);
 
         } catch (\Exception $e) {
-            // Jika masih error, kita biarkan pesannya terkirim agar ketahuan salahnya di mana
-            return response()->json(['error' => 'Gagal mengambil data: ' . $e->getMessage()], 500);
+            \Log::error('Gagal mengambil data offline order: ' . $e->getMessage());
+            return response()->json(['error' => 'Terjadi kesalahan server. Silakan coba lagi.'], 500);
         }
     }
 }

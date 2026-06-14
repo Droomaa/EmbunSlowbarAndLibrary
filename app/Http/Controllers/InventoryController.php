@@ -10,7 +10,12 @@ class InventoryController extends Controller
 {
     public function index(): JsonResponse
     {
-        return response()->json(Inventory::all(), 200);
+        $inventories = Inventory::all()->map(function($item) {
+            $item->name = $item->item_name;
+            $item->min_stock_level = 500;
+            return $item;
+        });
+        return response()->json($inventories, 200);
     }
 
     public function store(Request $request): JsonResponse

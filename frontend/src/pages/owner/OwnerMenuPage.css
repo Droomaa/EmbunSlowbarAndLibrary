@@ -1,0 +1,27 @@
+.menu-img-preview {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.menu-product-col {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.menu-product-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.menu-product-name {
+  font-weight: 600;
+  color: var(--color-text-main);
+}
+
+.menu-product-desc {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+}

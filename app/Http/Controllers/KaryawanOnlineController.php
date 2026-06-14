@@ -59,7 +59,8 @@ class KaryawanOnlineController extends Controller
             ], 200);
 
         } catch (\Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 500);
+            \Log::error('Error get online orders: ' . $e->getMessage());
+            return response()->json(['error' => 'Terjadi kesalahan server. Silakan coba lagi.'], 500);
         }
     }
 
@@ -114,7 +115,8 @@ class KaryawanOnlineController extends Controller
             
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json(['error' => 'Gagal mengubah status: ' . $e->getMessage()], 500);
+            \Log::error('Gagal mengubah status: ' . $e->getMessage());
+            return response()->json(['error' => 'Terjadi kesalahan server. Silakan coba lagi.'], 500);
         }
     }
 }
